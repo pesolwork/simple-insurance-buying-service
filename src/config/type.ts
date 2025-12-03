@@ -29,6 +29,11 @@ export interface IMailerConfig {
   password: string;
 }
 
+export interface IQueueConfig {
+  host: string;
+  port: number;
+}
+
 export interface IConfig {
   port: number;
   database: IDatabaseConfig;
@@ -36,4 +41,5 @@ export interface IConfig {
   sms: ISmsConfig;
   payment: IPaymentConfig;
   mailer: IMailerConfig;
+  queue: IQueueConfig;
 }
