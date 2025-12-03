@@ -295,11 +295,6 @@ export class PolicyBLL extends PolicyService {
     }
   }
 
-  async validatePlan(body: ValidatePlanDTO) {
-    await this.getAndValidatePlan(body.planId, body.dateOfBirth);
-    return new ResponseDTO<any>({ data: { valid: true } });
-  }
-
   async getAndValidatePlan(planId: number, dob: string) {
     const plan = await this._planRepository.findById(planId);
     if (!plan) throw new BadRequestException('Plan not found');
