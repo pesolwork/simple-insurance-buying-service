@@ -18,7 +18,6 @@ import { PaymentService } from 'artifacts/payment/service';
 import {
   PaymentMethod,
   PolicyStatus,
-  RunningNumberType,
   TransactionStatus,
 } from 'src/common/enum';
 import { MailerService } from 'artifacts/mailer/service';
@@ -26,18 +25,17 @@ import { TransactionRepository } from '../transactions/repository';
 import { HealthInfo } from 'src/models/health-info.model';
 import { Beneficiary } from 'src/models/beneficiary.model';
 import * as PDFDocument from 'pdfkit';
-import { RunningNumberRepository } from '../running-numbers/repository';
 import { policyStatusMap } from './constants';
 import * as path from 'node:path';
 import { PolicyAssociationDTO } from '../policy-associations/dto/dto';
 import { PolicyAssociationSearchDTO } from '../policy-associations/dto/search.dto';
 import { toThaiBath } from 'src/common/utils/numbers';
 import { formatThaiDate } from 'src/common/utils/dates';
-import { ValidatePlanDTO } from '../plans/dto/validate-plan.dto';
 import { PolicyPaymentQrResponseDTO } from './dto/payment-qr-response.dto';
 import { CreatePolicyApplicationDTO } from './dto/create-policy-application.dto';
 import { CreateHealthInfoDTO } from './dto/create-health-info.dto';
 import { CreateBeneficiaryDTO } from './dto/create-beneficiary.dto';
+import { EmailProducer } from '../email-queue/producer';
 
 @Injectable()
 export class PolicyBLL extends PolicyService {
@@ -51,6 +49,7 @@ export class PolicyBLL extends PolicyService {
     private readonly _paymentService: PaymentService,
     private readonly _mailerService: MailerService,
     private readonly _sequelize: Sequelize,
+    private readonly _emailProducer: EmailProducer,
   ) {
     super(_repo);
   }
@@ -359,7 +358,7 @@ export class PolicyBLL extends PolicyService {
   private async sendApplicationCreatedEmail(to: string, data: any) {
     const { customer, beneficiaries, status } = data;
 
-    await this._mailerService.sendMail({
+    await this._emailProducer.sendEmail({
       to,
       subject: 'แจ้งการสร้างใบคำขอประกันสำเร็จ',
       html: `

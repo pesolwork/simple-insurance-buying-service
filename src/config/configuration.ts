@@ -26,4 +26,8 @@ export default () => ({
     user: process.env.MAILER_USER,
     password: process.env.MAILER_PASSWORD,
   },
+  queue: {
+    host: process.env.QUEUE_HOST,
+    port: parseInt(process.env.QUEUE_PORT, 10) || 6379,
+  }
 });

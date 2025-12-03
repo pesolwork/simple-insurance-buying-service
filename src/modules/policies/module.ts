@@ -13,6 +13,7 @@ import { PlanModule } from '../plans/module';
 import { RunningNumberModule } from '../running-numbers/module';
 import { TransactionModule } from '../transactions/module';
 import { PolicyBLL } from './bll';
+import { EmailQueueModule } from '../email-queue/module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { PolicyBLL } from './bll';
     MailerModule,
     TransactionModule,
     RunningNumberModule,
+    EmailQueueModule,
   ],
   controllers: [PolicyController],
   providers: [PolicyRepository, PolicyService, PolicyBLL],

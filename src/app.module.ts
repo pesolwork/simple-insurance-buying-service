@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { IDatabaseConfig } from './config/type';
+import { IDatabaseConfig, IQueueConfig } from './config/type';
 import configuration from './config/configuration';
 import { User } from './models/user.model';
 import { UserModule } from './modules/users/module';
@@ -28,6 +28,7 @@ import { PaymentsModule } from './modules/payments/module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -38,6 +39,19 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
       },
     ]),
     ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => {
+        const redisConfig = configService.get<IQueueConfig>('queue');
+        return {
+          connection: {
+            host: redisConfig.host,
+            port: redisConfig.port,
+          },
+        };
+      },
+    }),
     SequelizeModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
