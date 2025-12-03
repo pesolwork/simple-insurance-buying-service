@@ -46,7 +46,7 @@ function redact(obj: any): any {
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
-  private readonly logger = new Logger('HTTP');
+  private readonly logger = new Logger(LoggingInterceptor.name);
   private readonly maxLogLength = 300;
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
@@ -60,11 +60,15 @@ export class LoggingInterceptor implements NestInterceptor {
       body: redact(body),
     };
 
-    this.logger.log(
-      `➡️  ${method} ${originalUrl} | Request: ${JSON.stringify(
-        requestPayload,
-      )}`,
-    );
+    let requestLog: string;
+    const requestStr = JSON.stringify(requestPayload);
+    if (requestStr.length > this.maxLogLength) {
+      requestLog = requestStr.substring(0, this.maxLogLength) + '...';
+    } else {
+      requestLog = requestStr;
+    }
+
+    this.logger.log(`➡️  ${method} ${originalUrl} | Request: ${requestLog}`);
 
     return next.handle().pipe(
       tap((data) => {
