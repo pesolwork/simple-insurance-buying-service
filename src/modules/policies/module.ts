@@ -5,7 +5,6 @@ import { PolicyService } from './service';
 import { PolicyController } from './controller';
 import { Policy } from 'src/models/policy.model';
 import { CustomerModule } from '../customers/module';
-import { MailerModule } from 'artifacts/mailer/module';
 import { PaymentModule } from 'artifacts/payment/module';
 import { BeneficiaryModule } from '../beneficiaries/module';
 import { HealthInfoModule } from '../health-infos/module';
@@ -23,7 +22,6 @@ import { EmailQueueModule } from '../email-queue/module';
     HealthInfoModule,
     PlanModule,
     PaymentModule,
-    MailerModule,
     TransactionModule,
     RunningNumberModule,
     EmailQueueModule,

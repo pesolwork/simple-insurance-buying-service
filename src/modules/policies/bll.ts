@@ -20,7 +20,6 @@ import {
   PolicyStatus,
   TransactionStatus,
 } from 'src/common/enum';
-import { MailerService } from 'artifacts/mailer/service';
 import { TransactionRepository } from '../transactions/repository';
 import { HealthInfo } from 'src/models/health-info.model';
 import { Beneficiary } from 'src/models/beneficiary.model';
@@ -47,7 +46,6 @@ export class PolicyBLL extends PolicyService {
     private readonly _healthInfoRepository: HealthInfoRepository,
     private readonly _transactionRepository: TransactionRepository,
     private readonly _paymentService: PaymentService,
-    private readonly _mailerService: MailerService,
     private readonly _sequelize: Sequelize,
     private readonly _emailProducer: EmailProducer,
   ) {
@@ -65,18 +63,7 @@ export class PolicyBLL extends PolicyService {
   }
 
   async getPolicyPdfStream(policyId: number) {
-    const policy = (await this.loadFullPolicy(
-      policyId,
-    )) as PolicyAssociationDTO;
-
-    if (!policy) {
-      throw new NotFoundException('Policy not found');
-    }
-
-    if (policy.status === PolicyStatus.PendingPayment) {
-      throw new BadRequestException('Policy not paid');
-    }
-
+    const policy = await this.getValidatedPaidPolicy(policyId);
     return this.generatePolicyPdfStream(policy);
   }
 
@@ -461,6 +448,20 @@ export class PolicyBLL extends PolicyService {
     });
   }
 
+  private async getValidatedPaidPolicy(policyId: number) {
+    const policy = await this.loadFullPolicy(policyId);
+
+    if (!policy) {
+      throw new NotFoundException('Policy not found');
+    }
+
+    if (policy.status === PolicyStatus.PendingPayment) {
+      throw new BadRequestException('Policy not paid');
+    }
+
+    return policy.toJSON() as PolicyAssociationDTO;
+  }
+
   async findByViewAndId(
     view: PolicyView,
     id: number,
@@ -490,5 +491,12 @@ export class PolicyBLL extends PolicyService {
     options.include = PolicyIncludeView[view];
 
     return super.findAll(query, options) as any;
+  }
+
+  async sendPolicyEmail(id: number) {
+    await this.getValidatedPaidPolicy(id);
+    this._emailProducer.sendPolicyEmail(id);
+
+    return new ResponseDTO({ message: 'Email sent' });
   }
 }

@@ -22,7 +22,7 @@ import { ResponseDTO } from 'src/common/base/dto/base-response.dto';
 import { ApiResponseData } from 'src/common/decorators/api-response-data.decorator';
 import { PolicyPaymentQrResponseDTO } from './dto/payment-qr-response.dto';
 import { Public } from 'src/common/decorators/public.decorator';
-import { ApiOperation, ApiParam } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { PolicyBLL } from './bll';
 import { PolicyAssociationDTO } from '../policy-associations/dto/dto';
 import { Response } from 'express';
@@ -34,6 +34,7 @@ import { PolicyAssociationSearchDTO } from '../policy-associations/dto/search.dt
   version: '1',
   path: 'policies',
 })
+@ApiBearerAuth()
 @Roles(UserRole.SuperAdmin, UserRole.Admin)
 @UseGuards(AuthGuard, RoleGuard)
 export class PolicyController {
@@ -78,6 +79,13 @@ export class PolicyController {
   @ApiResponseData(200, PolicyDTO)
   findById(@Param('id') id: number): Promise<ResponseDTO<PolicyDTO>> {
     return this._service.findById(id);
+  }
+
+  @Post('/:id/email')
+  @ApiOperation({ summary: 'ส่งอีเมลกรมธรรม์' })
+  @UsePipes(new ValidationPipe({ transform: true }))
+  sendPolicyEmail(@Param('id') id: number) {
+    return this._bll.sendPolicyEmail(id);
   }
 
   @Get('/:id/pdf')
