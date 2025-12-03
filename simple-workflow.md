@@ -105,7 +105,7 @@ POST /api/v1/plans/validate
 4. Frontend แสดง QR ให้สแกน
 5. Frontend สามารถ:
 
-   * Polling เช็คสถานะทุก 5–10 วินาที ```status ต้องมีค่าเป็น 'active'```:
+   * Polling เช็คสถานะทุก 5–10 วินาที ```data.status ต้องมีค่าเป็น 'active'```:
 
      ```
      GET /api/v1/policies/{id}
