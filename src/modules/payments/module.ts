@@ -9,6 +9,7 @@ import { HealthInfoModule } from '../health-infos/module';
 import { RunningNumberModule } from '../running-numbers/module';
 import { TransactionModule } from '../transactions/module';
 import { PaymentsService } from './service';
+import { EmailQueueModule } from '../email-queue/module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PaymentsService } from './service';
     MailerModule,
     TransactionModule,
     RunningNumberModule,
+    EmailQueueModule,
   ],
   controllers: [PaymentsController],
   providers: [PaymentsService],
