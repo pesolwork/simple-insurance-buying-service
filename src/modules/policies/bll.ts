@@ -192,7 +192,7 @@ export class PolicyBLL extends PolicyService {
       amount: source.amount,
       currency: source.currency,
       source: source.id,
-      description: `Payment for policy ${policy.no}`,
+      description: `Payment for Policy #${policy.id}`,
       metadata: {
         policyId: policy.id,
         paymentMethod: source.type,
