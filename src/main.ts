@@ -27,6 +27,7 @@ async function bootstrap() {
     const documentFactory = () => SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('/docs', app, documentFactory, {
       useGlobalPrefix: true,
+      jsonDocumentUrl: 'docs/json',
     });
   }
 
