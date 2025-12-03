@@ -79,7 +79,7 @@ POST /api/v1/plans/validate
 
    * ตรวจสอบข้อมูล (อายุอยู่ในช่วงแผน, Beneficiaries = 100%)
    * บันทึกลงฐานข้อมูล
-   * ส่ง Email แจ้งสถานะ **"รอชำระเบี้ย"**
+   * เพิ่ม job ไปที่ `email_queue` เพื่อส่ง Email แจ้งสถานะ **"รอชำระเบี้ย"**
    * ส่ง `policyId` กลับให้ Frontend
 4. Redirect ไปหน้าชำระเงิน เช่น:
 
@@ -124,8 +124,7 @@ POST /api/payments/webhook
 
 * ตรวจสอบ `webhook event`, `transaction reference` และ `expected amount`
 * อัปเดต status กรมธรรม์ → **มีผลคุ้มครอง**
-* สร้าง PDF กรมธรรม์
-* ส่ง email พร้อม PDF ให้ลูกค้า
+* เพิ่ม job ไปที่ `email_queue` เพื่อส่งอีเมลพร้อมแนบ PDF กรมธรรม์ให้ลูกค้า
 
 ---
 
@@ -143,5 +142,23 @@ Backend:
 
 * ตรวจสอบสิทธิ์ role `super_admin` หรือ `admin`
 * ดาวน์โหลด PDF
+
+---
+
+## 5️⃣ Admin ส่งอีเมลกรมธรรม์ซ้ำ (Admin Resends Policy Email)
+
+> สำหรับกรณีลูกค้าไม่ได้รับ email หรือขอเอกสารซ้ำ
+
+Frontend Admin เรียก API:
+
+```
+POST /api/v1/policies/{id}/email
+```
+
+Backend:
+
+* ตรวจสอบสิทธิ์ role `super_admin` หรือ `admin`
+* ตรวจสอบว่ากรมธรรม์จ่ายเงินแล้ว
+* เพิ่ม job ไปที่ `email_queue` เพื่อส่งอีเมลพร้อมแนบ PDF กรมธรรม์ให้ลูกค้า
 
 ---
