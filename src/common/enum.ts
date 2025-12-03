@@ -1,0 +1,26 @@
+export enum UserRole {
+  SuperAdmin = 'super_admin',
+  Admin = 'admin',
+  // User = 'user',
+}
+
+export enum PolicyStatus {
+  PendingPayment = 'pending_payment',
+  Active = 'active',
+  Expired = 'expired',
+}
+
+export enum TransactionStatus {
+  Pending = 'pending',
+  Paid = 'paid',
+  Failed = 'failed',
+}
+
+export enum PaymentMethod {
+  Promptpay = 'promptpay',
+  // CreditCard = 'credit_card',
+}
+
+export enum RunningNumberType {
+  Policy = 'policy',
+}
