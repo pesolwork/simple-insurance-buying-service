@@ -12,7 +12,7 @@ import { PlanModule } from '../plans/module';
 import { RunningNumberModule } from '../running-numbers/module';
 import { TransactionModule } from '../transactions/module';
 import { PolicyBLL } from './bll';
-import { EmailQueueModule } from '../email-queue/module';
+import { EmailQueueModule } from '../queues/email-queue/module';
 
 @Module({
   imports: [

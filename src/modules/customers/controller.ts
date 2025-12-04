@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Param,
   Post,
   Put,
@@ -21,6 +22,8 @@ import { ResponseDTO } from 'src/common/base/dto/base-response.dto';
 import { ApiResponseData } from 'src/common/decorators/api-response-data.decorator';
 import { Customer } from 'src/models/customer.model';
 import { BaseController } from 'src/common/base/controllers/base.controller';
+import { ApiOperation } from '@nestjs/swagger';
+import { ValidateEmailDTO } from './dto/validate-email.dto';
 
 @Controller({
   version: '1',
@@ -31,6 +34,14 @@ import { BaseController } from 'src/common/base/controllers/base.controller';
 export class CustomerController extends BaseController<Customer, CustomerDTO> {
   constructor(private readonly _service: CustomerService) {
     super(_service);
+  }
+
+  @Post('validate-email')
+  @ApiOperation({ summary: 'ตรวจสอบอีเมล' })
+  @UsePipes(new ValidationPipe({ transform: true }))
+  @HttpCode(200)
+  validateEmail(@Body() body: ValidateEmailDTO): Promise<ResponseDTO<any>> {
+    return this._service.validateEmail(body.email);
   }
 
   @Post()

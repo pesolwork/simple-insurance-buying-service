@@ -3,7 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { EmailProcessor } from './processor';
 import { EmailProducer } from './producer';
 import { MailerModule } from 'artifacts/mailer/module';
-import { PolicyModule } from '../policies/module';
+import { PolicyModule } from '../../policies/module';
 
 @Module({
   imports: [

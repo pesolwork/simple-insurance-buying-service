@@ -29,6 +29,8 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { BullModule } from '@nestjs/bullmq';
+import { EmailQueueModule } from './modules/queues/email-queue/module';
+import { PaymentQueueModule } from './modules/queues/payment-queue/module';
 
 @Module({
   imports: [
@@ -96,6 +98,8 @@ import { BullModule } from '@nestjs/bullmq';
     PaymentModule,
     RunningNumberModule,
     PaymentsModule,
+    EmailQueueModule,
+    PaymentQueueModule,
   ],
   controllers: [AppController],
   providers: [
