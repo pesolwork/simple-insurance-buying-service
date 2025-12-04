@@ -35,6 +35,7 @@ import { CreatePolicyApplicationDTO } from './dto/create-policy-application.dto'
 import { CreateHealthInfoDTO } from './dto/create-health-info.dto';
 import { CreateBeneficiaryDTO } from './dto/create-beneficiary.dto';
 import { EmailProducer } from '../queues/email-queue/producer';
+import { CustomerService } from '../customers/service';
 
 @Injectable()
 export class PolicyBLL extends PolicyService {
@@ -48,6 +49,7 @@ export class PolicyBLL extends PolicyService {
     private readonly _paymentService: PaymentService,
     private readonly _sequelize: Sequelize,
     private readonly _emailProducer: EmailProducer,
+    private readonly _customerService: CustomerService,
   ) {
     super(_repo);
   }
@@ -220,6 +222,8 @@ export class PolicyBLL extends PolicyService {
     options?: CreateOptions<any>,
   ): Promise<ResponseDTO<PolicyAssociationDTO>> {
     const { customer, healthInfo, beneficiaries } = data;
+
+    await this._customerService.validateEmail(customer.email);
 
     const plan = await this.getAndValidatePlan(
       data.planId,

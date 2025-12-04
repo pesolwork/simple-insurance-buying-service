@@ -54,7 +54,7 @@ CREATE TABLE "customers" (
   "id_card_number" varchar(13) NOT NULL,
   "date_of_birth" date NOT NULL,
   "phone" varchar NOT NULL,
-  "email" varchar NOT NULL,
+  "email" varchar UNIQUE NOT NULL,
   "address" text NOT NULL,
   "created_at" timestamptz DEFAULT (now()),
   "updated_at" timestamptz DEFAULT (now())
