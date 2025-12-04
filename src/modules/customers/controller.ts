@@ -24,6 +24,7 @@ import { Customer } from 'src/models/customer.model';
 import { BaseController } from 'src/common/base/controllers/base.controller';
 import { ApiOperation } from '@nestjs/swagger';
 import { ValidateEmailDTO } from './dto/validate-email.dto';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller({
   version: '1',
@@ -36,6 +37,7 @@ export class CustomerController extends BaseController<Customer, CustomerDTO> {
     super(_service);
   }
 
+  @Public()
   @Post('validate-email')
   @ApiOperation({ summary: 'ตรวจสอบอีเมล' })
   @UsePipes(new ValidationPipe({ transform: true }))
