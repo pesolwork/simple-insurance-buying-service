@@ -39,8 +39,11 @@
 * Email
 * วันเดือนปีเกิด
 
-(ตรวจสอบอายุกับแผนก่อน submit ได้):
+(ตรวจสอบ Email และ อายุกับแผนก่อน submit ได้):
 
+```
+POST /api/v1/customers/validate-email
+```
 ```
 POST /api/v1/plans/validate
 ```
@@ -77,7 +80,7 @@ POST /api/v1/plans/validate
    ```
 3. Backend ทำงาน:
 
-   * ตรวจสอบข้อมูล (อายุอยู่ในช่วงแผน, Beneficiaries = 100%)
+   * ตรวจสอบข้อมูล (Email ไม่ซ้ำ, อายุอยู่ในช่วงแผน, Beneficiaries = 100%)
    * บันทึกลงฐานข้อมูล
    * เพิ่ม job ไปที่ `email_queue` เพื่อส่ง Email แจ้งสถานะ **"รอชำระเบี้ย"**
    * ส่ง `policyId` กลับให้ Frontend
