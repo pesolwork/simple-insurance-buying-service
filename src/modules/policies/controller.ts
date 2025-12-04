@@ -130,7 +130,6 @@ export class PolicyController {
     return this._bll.createPolicyApplication(body);
   }
 
-  @Public()
   @Post('/associations')
   @ApiOperation({ summary: 'สร้างข้อมูลการสมัครประกันแบบมี customer id แล้ว' })
   @UsePipes(new ValidationPipe({ transform: true }))
