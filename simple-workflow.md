@@ -39,7 +39,7 @@
 * Email
 * วันเดือนปีเกิด
 
-(ตรวจสอบ Email และ อายุกับแผนก่อน submit ได้):
+(ตรวจสอบ Email ซ้ำ และ อายุกับแผนก่อน submit):
 
 ```
 POST /api/v1/customers/validate-email
@@ -125,7 +125,9 @@ POST /api/payments/webhook
 
 หลังรับ webhook Backend จะ:
 
-* ตรวจสอบ `webhook event`, `transaction reference` และ `expected amount`
+* ตรวจสอบ `webhook event`
+* เพิ่ม job ไปที่ `payment_queue`
+* ตรวจสอบ `transaction reference` และ `expected amount`
 * อัปเดต status กรมธรรม์ → **มีผลคุ้มครอง**
 * เพิ่ม job ไปที่ `email_queue` เพื่อส่งอีเมลพร้อมแนบ PDF กรมธรรม์ให้ลูกค้า
 
