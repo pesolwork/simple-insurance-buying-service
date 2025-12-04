@@ -46,6 +46,7 @@ export class Customer extends Model<Customer> {
   @Column({
     type: DataType.STRING,
     allowNull: false,
+    unique: true,
   })
   declare email: string;
 

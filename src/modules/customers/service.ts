@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { BaseService } from 'src/common/base/services/base.service';
 import { CustomerRepository } from './repository';
 import { FindOptions, Op } from 'sequelize';
@@ -11,6 +11,18 @@ import { Customer } from 'src/models/customer.model';
 export class CustomerService extends BaseService<Customer, CustomerDTO> {
   constructor(private readonly _repository: CustomerRepository) {
     super(_repository);
+  }
+
+  async validateEmail(email: string) {
+    const customer = await this._repository.findOne({
+      where: { email },
+    });
+
+    if (customer) {
+      throw new BadRequestException('Email already exists');
+    }
+
+    return new ResponseDTO<any>({ data: { valid: true } });
   }
 
   async findAll(
