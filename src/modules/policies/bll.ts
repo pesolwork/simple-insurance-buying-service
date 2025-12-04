@@ -36,6 +36,7 @@ import { CreateHealthInfoDTO } from './dto/create-health-info.dto';
 import { CreateBeneficiaryDTO } from './dto/create-beneficiary.dto';
 import { EmailProducer } from '../queues/email-queue/producer';
 import { CustomerService } from '../customers/service';
+import { CreatePolicyAssociationDTO } from '../policy-associations/dto/create.dto';
 
 @Injectable()
 export class PolicyBLL extends PolicyService {
@@ -264,6 +265,71 @@ export class PolicyBLL extends PolicyService {
       );
 
       this.sendApplicationCreatedEmail(createdCustomer.email, {
+        ...policyDTO,
+        customer: customerDTO,
+        plan,
+        beneficiaries: beneficiariesDTO,
+        healthInfo: healthInfoDTO,
+      });
+
+      return new ResponseDTO<PolicyAssociationDTO>({
+        data: {
+          ...policyDTO,
+          customer: customerDTO,
+          healthInfo: healthInfoDTO,
+          beneficiaries: beneficiariesDTO,
+        } as PolicyAssociationDTO,
+      });
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
+  }
+
+  async createPolicyAssociation(
+    data: CreatePolicyAssociationDTO,
+    options?: CreateOptions<any>,
+  ): Promise<ResponseDTO<PolicyAssociationDTO>> {
+    const { customerId, healthInfo, beneficiaries } = data;
+
+    const customer = await this._customerRepository.findById(customerId);
+    if (!customer) throw new NotFoundException('Customer not found');
+
+    const plan = await this.getAndValidatePlan(
+      data.planId,
+      customer.dateOfBirth as any,
+    );
+
+    this.validateBeneficiaries(beneficiaries);
+
+    const policyPayload = await this.preparePolicyPayload(data, plan);
+    const transaction = await this._sequelize.transaction();
+
+    try {
+      options = { ...(options || {}), transaction };
+
+      policyPayload.customerId = customer.id;
+
+      const policy = await this._repo.create(policyPayload as any, options);
+
+      const [createdHealthInfo, createdBeneficiaries] =
+        await this.createAssociations(
+          policy.id,
+          healthInfo,
+          beneficiaries,
+          options,
+        );
+
+      await transaction.commit();
+
+      const policyDTO = policy.toJSON();
+      const customerDTO = customer.toJSON();
+      const healthInfoDTO = createdHealthInfo.toJSON();
+      const beneficiariesDTO = createdBeneficiaries.map((item) =>
+        item.toJSON(),
+      );
+
+      this.sendApplicationCreatedEmail(customer.email, {
         ...policyDTO,
         customer: customerDTO,
         plan,

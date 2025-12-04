@@ -29,6 +29,7 @@ import { Response } from 'express';
 import { CreatePolicyApplicationDTO } from './dto/create-policy-application.dto';
 import { PolicyView } from './view';
 import { PolicyAssociationSearchDTO } from '../policy-associations/dto/search.dto';
+import { CreatePolicyAssociationDTO } from '../policy-associations/dto/create.dto';
 
 @Controller({
   version: '1',
@@ -127,5 +128,16 @@ export class PolicyController {
     @Body() body: CreatePolicyApplicationDTO,
   ): Promise<ResponseDTO<PolicyAssociationDTO>> {
     return this._bll.createPolicyApplication(body);
+  }
+
+  @Public()
+  @Post('/associations')
+  @ApiOperation({ summary: 'สร้างข้อมูลการสมัครประกันแบบมี customer id แล้ว' })
+  @UsePipes(new ValidationPipe({ transform: true }))
+  @ApiResponseData(201, PolicyAssociationDTO)
+  createPolicyAssociation(
+    @Body() body: CreatePolicyAssociationDTO,
+  ): Promise<ResponseDTO<PolicyAssociationDTO>> {
+    return this._bll.createPolicyAssociation(body);
   }
 }
