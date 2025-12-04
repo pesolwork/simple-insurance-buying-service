@@ -1,18 +1,21 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { MailerService } from 'artifacts/mailer/service';
-import { PolicyRepository } from '../policies/repository';
+import { PolicyRepository } from '../../policies/repository';
 import { EmailQueueJobName } from './constants';
-import { policyStatusMap } from '../policies/constants';
+import { policyStatusMap } from '../../policies/constants';
 import { toThaiBath } from 'src/common/utils/numbers';
 import { formatThaiDate } from 'src/common/utils/dates';
 import * as path from 'path';
-import { PolicyAssociationDTO } from '../policy-associations/dto/dto';
+import { PolicyAssociationDTO } from '../../policy-associations/dto/dto';
 import * as PDFDocument from 'pdfkit';
-import { PolicyIncludeView, PolicyView } from '../policies/view';
+import { PolicyIncludeView, PolicyView } from '../../policies/view';
+import { Logger } from '@nestjs/common';
 
 @Processor('email_queue')
 export class EmailProcessor extends WorkerHost {
+  private readonly _logger = new Logger(EmailProcessor.name);
+
   constructor(
     private readonly _mailerService: MailerService,
     private readonly _policyRepository: PolicyRepository,
@@ -147,11 +150,11 @@ export class EmailProcessor extends WorkerHost {
 
   @OnWorkerEvent('completed')
   onCompleted(job: Job) {
-    console.log(`Email job ${job.id} completed`);
+    this._logger.log(`Email job ${job.id} completed`);
   }
 
   @OnWorkerEvent('failed')
   onFailed(job: Job, err: Error) {
-    console.log(`Email job ${job.id} failed: ${err.message}`);
+    this._logger.log(`Email job ${job.id} failed: ${err.message}`);
   }
 }

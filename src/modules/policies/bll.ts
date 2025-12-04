@@ -34,7 +34,7 @@ import { PolicyPaymentQrResponseDTO } from './dto/payment-qr-response.dto';
 import { CreatePolicyApplicationDTO } from './dto/create-policy-application.dto';
 import { CreateHealthInfoDTO } from './dto/create-health-info.dto';
 import { CreateBeneficiaryDTO } from './dto/create-beneficiary.dto';
-import { EmailProducer } from '../email-queue/producer';
+import { EmailProducer } from '../queues/email-queue/producer';
 
 @Injectable()
 export class PolicyBLL extends PolicyService {
