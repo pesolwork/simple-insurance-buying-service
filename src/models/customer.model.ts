@@ -1,4 +1,11 @@
-import { Table, Column, Model, DataType } from 'sequelize-typescript';
+import {
+  Table,
+  Column,
+  Model,
+  DataType,
+  BelongsTo,
+} from 'sequelize-typescript';
+import { User } from './user.model';
 
 @Table({
   tableName: 'customers',
@@ -55,4 +62,13 @@ export class Customer extends Model<Customer> {
     allowNull: false,
   })
   declare address: string;
+
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+  })
+  declare userId: number;
+
+  @BelongsTo(() => User)
+  declare user?: User;
 }

@@ -29,5 +29,5 @@ export default () => ({
   queue: {
     host: process.env.QUEUE_HOST,
     port: parseInt(process.env.QUEUE_PORT, 10) || 6379,
-  }
+  },
 });

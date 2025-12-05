@@ -1,6 +1,5 @@
 import { BaseRepository } from '../repositories/base.repository';
 import { CreateOptions, FindOptions } from 'sequelize';
-import { Request } from 'express';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Model } from 'sequelize-typescript';
 import { BaseSearchDTO } from '../dto/base-search.dto';
@@ -68,7 +67,7 @@ export abstract class BaseService<T extends Model, R> {
     return responseDTO;
   }
 
-  async delete(id: any, req?: Request): Promise<ResponseDTO<number>> {
+  async delete(id: any): Promise<ResponseDTO<number>> {
     const data = await this.repository.findById(id);
     if (!data) {
       throw new BadRequestException('Data not found');

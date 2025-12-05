@@ -5,12 +5,15 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
-import { LoginDTO } from './dto/dto';
+import { LoginDTO, LoginOtpDTO, RequestOtpDTO } from './dto/dto';
 import { ConfigService } from '@nestjs/config';
 import { IJwtConfig } from 'src/config/type';
 import { Request } from 'express';
 import { ResponseDTO } from 'src/common/base/dto/base-response.dto';
 import { UserRepository } from '../users/repository';
+import { CustomerRepository } from '../customers/repository';
+import { OtpService } from '../otp/service';
+import { EmailProducer } from '../queues/email-queue/producer';
 
 @Injectable()
 export class AuthService {
@@ -18,6 +21,9 @@ export class AuthService {
 
   constructor(
     private readonly userRepository: UserRepository,
+    private readonly customerRepository: CustomerRepository,
+    private readonly otpService: OtpService,
+    private readonly emailProducer: EmailProducer,
     private readonly configService: ConfigService,
   ) {
     this.jwtConfig = this.configService.get<IJwtConfig>('jwt');
@@ -62,7 +68,7 @@ export class AuthService {
       const responseDTO = new ResponseDTO();
       responseDTO.data = { ...result, user };
       return responseDTO;
-    } catch (error) {
+    } catch (_) {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
@@ -101,6 +107,60 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(body.password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const result = this.generateToken(user);
+
+    const responseDTO = new ResponseDTO();
+    responseDTO.data = {
+      ...result,
+      user: {
+        ...user.toJSON(),
+        password: undefined,
+      },
+    };
+
+    return responseDTO;
+  }
+
+  async requestOtp(body: RequestOtpDTO) {
+    const user = await this.userRepository.findOne({
+      where: { email: body.email },
+    });
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const otp = await this.otpService.createOtp(body.email);
+    this.emailProducer.sendEmail({
+      to: user.email,
+      subject: 'รหัส OTP สำหรับบริการซื้อประกันอย่างง่าย',
+      html: `
+        <p>สวัสดีครับ/ค่ะ,</p>
+        <p>รหัส OTP สำหรับยืนยันตัวตนของคุณคือ: <b>${otp}</b></p>
+        <p>รหัสนี้จะมีอายุ 5 นาที กรุณาไม่นำไปเปิดเผยให้ผู้อื่นทราบ</p>
+        <p>หากคุณไม่ได้เป็นผู้ขอรหัสนี้ กรุณาติดต่อฝ่ายสนับสนุนทันที</p>
+        <br/>
+        <p>ขอบคุณครับ/ค่ะ,<br/>ทีมงาน Simple Insurance</p>
+      `,
+    });
+
+    const responseDTO = new ResponseDTO();
+    responseDTO.data = { message: 'OTP sent successfully' };
+    return responseDTO;
+  }
+
+  async loginWithOtp(body: LoginOtpDTO) {
+    const isValid = await this.otpService.verifyOtp(body.email, body.otp);
+    if (!isValid) {
+      throw new UnauthorizedException('Invalid OTP');
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { email: body.email },
+    });
+    if (!user) {
+      throw new BadRequestException('User not found');
     }
 
     const result = this.generateToken(user);

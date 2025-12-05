@@ -13,6 +13,14 @@ export class UserService extends BaseService<User, UserDTO> {
     super(_repository);
   }
 
+  async findByEmail(email: string): Promise<ResponseDTO<UserDTO>> {
+    const data = await this._repository.findOne({
+      where: { email },
+    });
+
+    return new ResponseDTO({ data: data?.toJSON() as any });
+  }
+
   async findAll(
     query?: UserSearchDTO,
     options?: FindOptions<User>,

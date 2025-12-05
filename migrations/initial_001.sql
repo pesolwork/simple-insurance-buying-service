@@ -1,7 +1,8 @@
 CREATE TYPE "user_role" AS ENUM (
   'super_admin',
   'admin',
-  'user'
+  'user',
+  'customer'
 );
 
 CREATE TYPE "policy_status" AS ENUM (
@@ -21,6 +22,15 @@ CREATE TABLE "running_numbers" (
   "type" varchar NOT NULL,
   "prefix" varchar NOT NULL,
   "current_number" int NOT NULL DEFAULT 0,
+  "created_at" timestamptz DEFAULT (now()),
+  "updated_at" timestamptz DEFAULT (now())
+);
+
+CREATE TABLE "otps" (
+  "id" serial PRIMARY KEY,
+  "email" varchar NOT NULL,
+  "otp" varchar NOT NULL,
+  "expires_at" timestamptz NOT NULL,
   "created_at" timestamptz DEFAULT (now()),
   "updated_at" timestamptz DEFAULT (now())
 );
@@ -49,6 +59,7 @@ CREATE TABLE "plans" (
 
 CREATE TABLE "customers" (
   "id" serial PRIMARY KEY,
+  "user_id" int,
   "first_name" varchar NOT NULL,
   "last_name" varchar NOT NULL,
   "id_card_number" varchar(13) NOT NULL,
@@ -115,6 +126,8 @@ CREATE UNIQUE INDEX ON "running_numbers" ("type", "prefix");
 COMMENT ON COLUMN "running_numbers"."type" IS 'ประเภทเลข เช่น policy';
 
 COMMENT ON COLUMN "running_numbers"."prefix" IS 'prefix เช่น POL-2025';
+
+ALTER TABLE "customers" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 
 ALTER TABLE "policies" ADD FOREIGN KEY ("plan_id") REFERENCES "plans" ("id");
 
