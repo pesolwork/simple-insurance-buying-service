@@ -27,7 +27,7 @@ export class ResponseDTO<T> {
   constructor(paylod?: Partial<ResponseDTO<T>>) {
     this.data = paylod?.data;
     this.status = paylod?.status || 'ok';
-    this.message = paylod?.message!;
+    this.message = paylod?.message;
     this.metadata = paylod?.metadata || new Metadata();
   }
 }

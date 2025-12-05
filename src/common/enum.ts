@@ -2,6 +2,7 @@ export enum UserRole {
   SuperAdmin = 'super_admin',
   Admin = 'admin',
   // User = 'user',
+  Customer = 'customer',
 }
 
 export enum PolicyStatus {

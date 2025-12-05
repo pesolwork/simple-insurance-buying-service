@@ -25,6 +25,7 @@ import { BaseController } from 'src/common/base/controllers/base.controller';
 import { ApiOperation } from '@nestjs/swagger';
 import { ValidateEmailDTO } from './dto/validate-email.dto';
 import { Public } from 'src/common/decorators/public.decorator';
+import { CreateCustomerDTO } from './dto/create.dto';
 
 @Controller({
   version: '1',
@@ -35,6 +36,15 @@ import { Public } from 'src/common/decorators/public.decorator';
 export class CustomerController extends BaseController<Customer, CustomerDTO> {
   constructor(private readonly _service: CustomerService) {
     super(_service);
+  }
+
+  @Public()
+  @Post('register')
+  @ApiOperation({ summary: 'ลูกค้าใหม่ลงทะเบียน' })
+  @UsePipes(new ValidationPipe({ transform: true }))
+  @HttpCode(200)
+  register(@Body() body: CreateCustomerDTO): Promise<ResponseDTO<CustomerDTO>> {
+    return this._service.register(body);
   }
 
   @Public()

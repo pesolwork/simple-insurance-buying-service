@@ -31,6 +31,8 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { BullModule } from '@nestjs/bullmq';
 import { EmailQueueModule } from './modules/queues/email-queue/module';
 import { PaymentQueueModule } from './modules/queues/payment-queue/module';
+import { Otp } from './modules/otp/model';
+import { OtpModule } from './modules/otp/module';
 
 @Module({
   imports: [
@@ -82,6 +84,7 @@ import { PaymentQueueModule } from './modules/queues/payment-queue/module';
             Beneficiary,
             Transaction,
             RunningNumber,
+            Otp,
           ],
         };
       },
@@ -100,6 +103,7 @@ import { PaymentQueueModule } from './modules/queues/payment-queue/module';
     PaymentsModule,
     EmailQueueModule,
     PaymentQueueModule,
+    OtpModule,
   ],
   controllers: [AppController],
   providers: [

@@ -12,7 +12,13 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './service';
 import { Public } from 'src/common/decorators/public.decorator';
-import { LoginDTO, LoginResponseDTO, RefreshTokenDTO } from './dto/dto';
+import {
+  LoginDTO,
+  LoginOtpDTO,
+  LoginResponseDTO,
+  RefreshTokenDTO,
+  RequestOtpDTO,
+} from './dto/dto';
 import { LoggingInterceptor } from 'src/common/interceptors/logging.interceptor';
 import { Request } from 'express';
 import { UserDTO } from '../users/dto/dto';
@@ -35,6 +41,24 @@ export class AuthController {
   @ApiResponseData(200, LoginResponseDTO)
   async login(@Body() body: LoginDTO) {
     return this.authService.login(body);
+  }
+
+  @Public()
+  @Post('otp/request')
+  @HttpCode(200)
+  @UsePipes(new ValidationPipe({ transform: true }))
+  @ApiResponseData(200, undefined)
+  async requestOtp(@Body() body: RequestOtpDTO) {
+    return this.authService.requestOtp(body);
+  }
+
+  @Public()
+  @Post('otp/login')
+  @HttpCode(200)
+  @UsePipes(new ValidationPipe({ transform: true }))
+  @ApiResponseData(200, LoginResponseDTO)
+  async loginWithOtp(@Body() body: LoginOtpDTO) {
+    return this.authService.loginWithOtp(body);
   }
 
   @ApiBearerAuth()
