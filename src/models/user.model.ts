@@ -1,5 +1,6 @@
-import { Column, Table, DataType, Model } from 'sequelize-typescript';
+import { Column, Table, DataType, Model, HasOne } from 'sequelize-typescript';
 import { UserRole } from 'src/common/enum';
+import { Customer } from './customer.model';
 
 @Table({
   tableName: 'users',
@@ -32,4 +33,7 @@ export class User extends Model<User> {
     allowNull: false,
   })
   declare role: UserRole;
+
+  @HasOne(() => Customer)
+  declare customer: Customer;
 }

@@ -52,3 +52,30 @@ export class LoginResponseDTO {
   })
   user: UserDTO;
 }
+
+export class RequestOtpDTO {
+  @ApiProperty({
+    example: 'user@example.com',
+    description: 'อีเมลผู้ใช้งาน (unique)',
+  })
+  @IsEmail()
+  email: string;
+}
+
+export class LoginOtpDTO {
+  @ApiProperty({
+    example: 'user@example.com',
+    description: 'อีเมลผู้ใช้งาน (unique)',
+  })
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({
+    description: 'OTP code',
+    required: true,
+    type: String,
+    example: '123456',
+  })
+  @IsString()
+  otp: string;
+}
