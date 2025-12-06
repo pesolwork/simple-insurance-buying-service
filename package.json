@@ -44,6 +44,7 @@
     "pdfkit": "^0.17.2",
     "pg": "^8.15.6",
     "pg-hstore": "^2.3.4",
+    "puppeteer": "^24.32.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "sequelize": "^6.37.7",
