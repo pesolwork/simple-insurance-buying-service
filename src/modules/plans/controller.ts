@@ -38,12 +38,12 @@ export class PlanController extends BaseController<Plan, PlanDTO> {
   }
 
   @Public()
-  @Post('/validate')
+  @Post('/validate-age')
   @HttpCode(200)
-  @ApiOperation({ summary: 'ตรวจสอบเงื่อนไขของแผน' })
+  @ApiOperation({ summary: 'ตรวจสอบอายุกับแผนประกัน' })
   @UsePipes(new ValidationPipe({ transform: true }))
-  validatePlan(@Body() body: ValidatePlanDTO) {
-    return this._service.validatePlan(body);
+  validateAge(@Body() body: ValidatePlanDTO) {
+    return this._service.validateAge(body);
   }
 
   @Post()

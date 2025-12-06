@@ -14,6 +14,7 @@ import { UserRepository } from '../users/repository';
 import { OtpService } from '../otp/service';
 import { EmailProducer } from '../queues/email-queue/producer';
 import { Customer } from 'src/models/customer.model';
+import { User } from 'src/models/user.model';
 
 @Injectable()
 export class AuthService {
@@ -50,6 +51,19 @@ export class AuthService {
     };
   }
 
+  private createLoginResponse(user: User) {
+    const tokens = this.generateToken(user);
+    const userJson = user.toJSON();
+    delete userJson.password;
+
+    const responseDTO = new ResponseDTO();
+    responseDTO.data = {
+      ...tokens,
+      user: userJson,
+    };
+    return responseDTO;
+  }
+
   async refreshToken(token: string) {
     try {
       const { refreshSecret } = this.jwtConfig;
@@ -65,10 +79,7 @@ export class AuthService {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
-      const result = this.generateToken(user);
-      const responseDTO = new ResponseDTO();
-      responseDTO.data = { ...result, user };
-      return responseDTO;
+      return this.createLoginResponse(user);
     } catch (_) {
       throw new UnauthorizedException('Invalid refresh token');
     }
@@ -112,18 +123,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const result = this.generateToken(user);
-
-    const responseDTO = new ResponseDTO();
-    responseDTO.data = {
-      ...result,
-      user: {
-        ...user.toJSON(),
-        password: undefined,
-      },
-    };
-
-    return responseDTO;
+    return this.createLoginResponse(user);
   }
 
   async requestOtp(body: RequestOtpDTO) {
@@ -167,17 +167,6 @@ export class AuthService {
       throw new BadRequestException('User not found');
     }
 
-    const result = this.generateToken(user);
-
-    const responseDTO = new ResponseDTO();
-    responseDTO.data = {
-      ...result,
-      user: {
-        ...user.toJSON(),
-        password: undefined,
-      },
-    };
-
-    return responseDTO;
+    return this.createLoginResponse(user);
   }
 }
