@@ -6,6 +6,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   Res,
   UseGuards,
   UsePipes,
@@ -25,7 +26,7 @@ import { Public } from 'src/common/decorators/public.decorator';
 import { ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { PolicyBLL } from './bll';
 import { PolicyAssociationDTO } from '../policy-associations/dto/dto';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { CreatePolicyApplicationDTO } from './dto/create-policy-application.dto';
 import { PolicyView } from './view';
 import { PolicyAssociationSearchDTO } from '../policy-associations/dto/search.dto';
@@ -130,13 +131,15 @@ export class PolicyController {
     return this._bll.createPolicyApplication(body);
   }
 
+  @Roles(UserRole.Customer)
   @Post('/associations')
   @ApiOperation({ summary: 'สร้างข้อมูลการสมัครประกันแบบมี customer id แล้ว' })
   @UsePipes(new ValidationPipe({ transform: true }))
   @ApiResponseData(201, PolicyAssociationDTO)
   createPolicyAssociation(
     @Body() body: CreatePolicyAssociationDTO,
+    @Req() req: Request,
   ): Promise<ResponseDTO<PolicyAssociationDTO>> {
-    return this._bll.createPolicyAssociation(body);
+    return this._bll.createPolicyAssociation(body, req['user']);
   }
 }

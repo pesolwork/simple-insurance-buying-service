@@ -19,6 +19,7 @@ import {
   PaymentMethod,
   PolicyStatus,
   TransactionStatus,
+  UserRole,
 } from 'src/common/enum';
 import { TransactionRepository } from '../transactions/repository';
 import { HealthInfo } from 'src/models/health-info.model';
@@ -239,21 +240,28 @@ export class PolicyBLL extends PolicyService {
       options,
     );
 
-    await this.sendApplicationCreatedEmail(result.customer.email, {
-      ...result,
-      plan: await this.getAndValidatePlan(
-        data.planId,
-        data.customer.dateOfBirth,
-      ),
-    });
+    await this.sendApplicationEmail(result, data.planId);
 
     return new ResponseDTO({ data: result });
   }
 
   async createPolicyAssociation(
     data: CreatePolicyAssociationDTO,
+    user: any,
     options?: CreateOptions<any>,
   ): Promise<ResponseDTO<PolicyAssociationDTO>> {
+    if (user.role === UserRole.Customer) {
+      const customer = await this._customerRepository.findOne({
+        where: {
+          userId: user.id,
+        },
+      });
+
+      if (!customer) throw new BadRequestException('Customer not found');
+
+      data.customerId = customer.id;
+    }
+
     const result = await this.createPolicyFlow(
       {
         customerId: data.customerId,
@@ -265,13 +273,7 @@ export class PolicyBLL extends PolicyService {
       options,
     );
 
-    await this.sendApplicationCreatedEmail(result.customer.email, {
-      ...result,
-      plan: await this.getAndValidatePlan(
-        data.planId,
-        result.customer.dateOfBirth,
-      ),
-    });
+    await this.sendApplicationEmail(result, data.planId);
 
     return new ResponseDTO({ data: result });
   }
@@ -350,6 +352,21 @@ export class PolicyBLL extends PolicyService {
       await trx.rollback();
       throw err;
     }
+  }
+
+  private async sendApplicationEmail(
+    result: PolicyAssociationDTO,
+    planId: number,
+  ): Promise<void> {
+    const plan = await this.getAndValidatePlan(
+      planId,
+      result.customer.dateOfBirth,
+    );
+
+    this.sendApplicationCreatedEmail(result.customer.email, {
+      ...result,
+      plan,
+    });
   }
 
   async getAndValidatePlan(planId: number, dob: string | Date) {
