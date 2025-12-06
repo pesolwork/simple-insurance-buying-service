@@ -13,6 +13,16 @@ export class PolicyService extends BaseService<Policy, PolicyDTO> {
     super(_repository);
   }
 
+  async getStatusById(id: number) {
+    const data = await this._repository.findById(id, {
+      attributes: ['status'],
+    });
+
+    return new ResponseDTO<PolicyDTO>({
+      data: new PolicyDTO(data),
+    });
+  }
+
   async findAll(
     query?: PolicySearchDTO,
     options?: FindOptions<Policy>,

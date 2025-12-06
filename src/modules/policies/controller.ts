@@ -83,6 +83,14 @@ export class PolicyController {
     return this._service.findById(id);
   }
 
+  @Public()
+  @Get('/:id/status')
+  @ApiOperation({ summary: 'ดูสถานะกรมธรรม์' })
+  @UsePipes(new ValidationPipe({ transform: true }))
+  getStatusById(@Param('id') id: number) {
+    return this._service.getStatusById(id);
+  }
+
   @Post('/:id/email')
   @ApiOperation({ summary: 'ส่งอีเมลกรมธรรม์' })
   @UsePipes(new ValidationPipe({ transform: true }))
