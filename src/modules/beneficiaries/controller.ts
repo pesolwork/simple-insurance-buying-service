@@ -26,7 +26,7 @@ import { BaseController } from 'src/common/base/controllers/base.controller';
   version: '1',
   path: 'beneficiaries',
 })
-@Roles(UserRole.SuperAdmin)
+@Roles(UserRole.SuperAdmin, UserRole.Admin)
 @UseGuards(AuthGuard, RoleGuard)
 export class BeneficiaryController extends BaseController<
   Beneficiary,
