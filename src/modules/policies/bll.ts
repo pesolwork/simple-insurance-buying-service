@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateOptions, FindOptions } from 'sequelize';
+import { CreateOptions, FindOptions, Transaction } from 'sequelize';
 import { PolicyIncludeView, PolicyView } from './view';
 import { Sequelize } from 'sequelize-typescript';
 import { PolicyService } from './service';
@@ -19,6 +19,7 @@ import {
   PaymentMethod,
   PolicyStatus,
   TransactionStatus,
+  UserRole,
 } from 'src/common/enum';
 import { TransactionRepository } from '../transactions/repository';
 import { HealthInfo } from 'src/models/health-info.model';
@@ -37,6 +38,14 @@ import { CreateBeneficiaryDTO } from './dto/create-beneficiary.dto';
 import { EmailProducer } from '../queues/email-queue/producer';
 import { CustomerService } from '../customers/service';
 import { CreatePolicyAssociationDTO } from '../policy-associations/dto/create.dto';
+import { PlanService } from '../plans/service';
+import { Customer } from 'src/models/customer.model';
+import { BeneficiaryDTO } from '../beneficiaries/dto/dto';
+import { HealthInfoDTO } from '../health-infos/dto/dto';
+import { CustomerDTO } from '../customers/dto/dto';
+import * as bcrypt from 'bcrypt';
+import { UserRepository } from '../users/repository';
+import { User } from 'src/models/user.model';
 
 @Injectable()
 export class PolicyBLL extends PolicyService {
@@ -51,6 +60,8 @@ export class PolicyBLL extends PolicyService {
     private readonly _sequelize: Sequelize,
     private readonly _emailProducer: EmailProducer,
     private readonly _customerService: CustomerService,
+    private readonly _planService: PlanService,
+    private readonly _userRepository: UserRepository,
   ) {
     super(_repo);
   }
@@ -222,96 +233,121 @@ export class PolicyBLL extends PolicyService {
     data: CreatePolicyApplicationDTO,
     options?: CreateOptions<any>,
   ): Promise<ResponseDTO<PolicyAssociationDTO>> {
-    const { customer, healthInfo, beneficiaries } = data;
-
-    await this._customerService.validateEmail(customer.email);
-
-    const plan = await this.getAndValidatePlan(
-      data.planId,
-      customer.dateOfBirth as any,
+    const result = await this.createPolicyFlow(
+      {
+        customer: data.customer,
+        planId: data.planId,
+        healthInfo: data.healthInfo,
+        beneficiaries: data.beneficiaries,
+        rawData: data,
+      },
+      options,
     );
 
-    this.validateBeneficiaries(beneficiaries);
+    await this.sendApplicationEmail(result, data.planId);
 
-    const policyPayload = await this.preparePolicyPayload(data, plan);
-    const transaction = await this._sequelize.transaction();
-
-    try {
-      options = { ...(options || {}), transaction };
-
-      const createdCustomer = await this._customerRepository.create(
-        customer,
-        options,
-      );
-      policyPayload.customerId = createdCustomer.id;
-
-      const policy = await this._repo.create(policyPayload as any, options);
-
-      const [createdHealthInfo, createdBeneficiaries] =
-        await this.createAssociations(
-          policy.id,
-          healthInfo,
-          beneficiaries,
-          options,
-        );
-
-      await transaction.commit();
-
-      const policyDTO = policy.toJSON();
-      const customerDTO = createdCustomer.toJSON();
-      const healthInfoDTO = createdHealthInfo.toJSON();
-      const beneficiariesDTO = createdBeneficiaries.map((item) =>
-        item.toJSON(),
-      );
-
-      this.sendApplicationCreatedEmail(createdCustomer.email, {
-        ...policyDTO,
-        customer: customerDTO,
-        plan,
-        beneficiaries: beneficiariesDTO,
-        healthInfo: healthInfoDTO,
-      });
-
-      return new ResponseDTO<PolicyAssociationDTO>({
-        data: {
-          ...policyDTO,
-          customer: customerDTO,
-          healthInfo: healthInfoDTO,
-          beneficiaries: beneficiariesDTO,
-        } as PolicyAssociationDTO,
-      });
-    } catch (err) {
-      await transaction.rollback();
-      throw err;
-    }
+    return new ResponseDTO({ data: result });
   }
 
   async createPolicyAssociation(
     data: CreatePolicyAssociationDTO,
+    user: any,
     options?: CreateOptions<any>,
   ): Promise<ResponseDTO<PolicyAssociationDTO>> {
-    const { customerId, healthInfo, beneficiaries } = data;
+    if (user.role === UserRole.Customer) {
+      const customer = await this._customerRepository.findOne({
+        where: {
+          userId: user.userId,
+        },
+      });
 
-    const customer = await this._customerRepository.findById(customerId);
-    if (!customer) throw new NotFoundException('Customer not found');
+      if (!customer) throw new BadRequestException('Customer not found');
 
-    const plan = await this.getAndValidatePlan(
-      data.planId,
-      customer.dateOfBirth as any,
+      data.customerId = customer.id;
+    }
+
+    const result = await this.createPolicyFlow(
+      {
+        customerId: data.customerId,
+        planId: data.planId,
+        healthInfo: data.healthInfo,
+        beneficiaries: data.beneficiaries,
+        rawData: data,
+      },
+      options,
     );
 
+    await this.sendApplicationEmail(result, data.planId);
+
+    return new ResponseDTO({ data: result });
+  }
+
+  private async createPolicyFlow(
+    payload: {
+      customer?: any; // ถ้ามี = สร้างใหม่
+      customerId?: number; // ถ้ามี = ใช้ customer เดิม
+      planId: number;
+      healthInfo: any;
+      beneficiaries: any[];
+      rawData: any; // original DTO ใช้ในการ preparePayload
+    },
+    options?: CreateOptions<any>,
+  ): Promise<PolicyAssociationDTO> {
+    const { customer, customerId, planId, healthInfo, beneficiaries, rawData } =
+      payload;
+
+    // --- validate customer ---
+    let customerModel: Customer;
+    if (customer) {
+      await this._customerService.validateEmail(customer.email);
+    }
+
+    // get customer (new or existing)
+    if (customerId) {
+      customerModel = await this._customerRepository.findById(customerId);
+      if (!customerModel) throw new NotFoundException('Customer not found');
+    }
+
+    // --- get plan ---
+    const dob = customer?.dateOfBirth || customerModel.dateOfBirth;
+    const plan = await this.getAndValidatePlan(planId, dob);
+
+    // --- validate beneficiaries ---
     this.validateBeneficiaries(beneficiaries);
 
-    const policyPayload = await this.preparePolicyPayload(data, plan);
-    const transaction = await this._sequelize.transaction();
+    // --- prepare policy ---
+    const policyPayload = await this.preparePolicyPayload(rawData, plan);
 
+    const trx = await this._sequelize.transaction();
     try {
-      options = { ...(options || {}), transaction };
+      options = { ...(options || {}), transaction: trx };
 
-      policyPayload.customerId = customer.id;
+      let userModel: User;
+      if (rawData.isRegister) {
+        userModel = await this.createUser(
+          {
+            email: customer.email,
+            password: customer?.password,
+          },
+          trx,
+        );
+      }
 
+      // --- create customer หากเป็น application ใหม่ ---
+      if (customer) {
+        customer.userId = userModel?.id || null;
+        customerModel = await this._customerRepository.create(
+          customer,
+          options,
+        );
+      }
+
+      policyPayload.customerId = customerModel.id;
+
+      // --- create policy ---
       const policy = await this._repo.create(policyPayload as any, options);
 
+      // --- create associations ---
       const [createdHealthInfo, createdBeneficiaries] =
         await this.createAssociations(
           policy.id,
@@ -320,43 +356,55 @@ export class PolicyBLL extends PolicyService {
           options,
         );
 
-      await transaction.commit();
+      await trx.commit();
 
-      const policyDTO = policy.toJSON();
-      const customerDTO = customer.toJSON();
-      const healthInfoDTO = createdHealthInfo.toJSON();
-      const beneficiariesDTO = createdBeneficiaries.map((item) =>
-        item.toJSON(),
-      );
-
-      this.sendApplicationCreatedEmail(customer.email, {
-        ...policyDTO,
-        customer: customerDTO,
-        plan,
-        beneficiaries: beneficiariesDTO,
-        healthInfo: healthInfoDTO,
-      });
-
-      return new ResponseDTO<PolicyAssociationDTO>({
-        data: {
-          ...policyDTO,
-          customer: customerDTO,
-          healthInfo: healthInfoDTO,
-          beneficiaries: beneficiariesDTO,
-        } as PolicyAssociationDTO,
-      });
+      return {
+        ...new PolicyAssociationDTO(policy),
+        customer: new CustomerDTO(customerModel),
+        healthInfo: new HealthInfoDTO(createdHealthInfo),
+        beneficiaries: createdBeneficiaries.map((x) => new BeneficiaryDTO(x)),
+      };
     } catch (err) {
-      await transaction.rollback();
+      await trx.rollback();
       throw err;
     }
   }
 
-  async getAndValidatePlan(planId: number, dob: string) {
+  private async createUser(
+    body: { email: string; password: string },
+    transaction: Transaction,
+  ) {
+    const hashedPassword = await bcrypt.hash(body.password, 10);
+    return this._userRepository.create(
+      {
+        email: body.email,
+        password: hashedPassword,
+        role: UserRole.Customer,
+      },
+      { transaction },
+    );
+  }
+
+  private async sendApplicationEmail(
+    result: PolicyAssociationDTO,
+    planId: number,
+  ): Promise<void> {
+    const plan = await this.getAndValidatePlan(
+      planId,
+      result.customer.dateOfBirth,
+    );
+
+    this.sendApplicationCreatedEmail(result.customer.email, {
+      ...result,
+      plan,
+    });
+  }
+
+  async getAndValidatePlan(planId: number, dob: string | Date) {
     const plan = await this._planRepository.findById(planId);
     if (!plan) throw new BadRequestException('Plan not found');
 
-    const age = new Date().getFullYear() - new Date(dob).getFullYear();
-    if (age < plan.minAge || age > plan.maxAge) {
+    if (!this._planService.isAgeInRangeExact(dob, plan.minAge, plan.maxAge)) {
       throw new BadRequestException(
         `Customer age must be between ${plan.minAge} and ${plan.maxAge}`,
       );
@@ -365,7 +413,7 @@ export class PolicyBLL extends PolicyService {
     return plan;
   }
 
-  private validateBeneficiaries(beneficiaries: any[]) {
+  private validateBeneficiaries(beneficiaries: CreateBeneficiaryDTO[]) {
     const total = beneficiaries.reduce((a, b) => a + b.percentage, 0);
     if (total !== 100) {
       throw new BadRequestException(

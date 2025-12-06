@@ -1,7 +1,6 @@
 CREATE TYPE "user_role" AS ENUM (
   'super_admin',
   'admin',
-  'user',
   'customer'
 );
 
@@ -39,7 +38,7 @@ CREATE TABLE "users" (
   "id" serial PRIMARY KEY,
   "email" varchar UNIQUE NOT NULL,
   "password" varchar NOT NULL,
-  "role" user_role NOT NULL DEFAULT 'user',
+  "role" user_role NOT NULL DEFAULT 'customer',
   "created_at" timestamptz DEFAULT (now()),
   "updated_at" timestamptz DEFAULT (now())
 );
@@ -65,7 +64,7 @@ CREATE TABLE "customers" (
   "id_card_number" varchar(13) NOT NULL,
   "date_of_birth" date NOT NULL,
   "phone" varchar NOT NULL,
-  "email" varchar UNIQUE NOT NULL,
+  "email" varchar NOT NULL,
   "address" text NOT NULL,
   "created_at" timestamptz DEFAULT (now()),
   "updated_at" timestamptz DEFAULT (now())

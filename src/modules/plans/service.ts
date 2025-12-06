@@ -7,6 +7,8 @@ import { PlanSearchDTO } from './dto/search.dto';
 import { ResponseDTO } from 'src/common/base/dto/base-response.dto';
 import { Plan } from 'src/models/plan.model';
 import { ValidatePlanDTO } from './dto/validate-plan.dto';
+import * as dayjs from 'dayjs';
+import { getAge } from 'src/common/utils/dates';
 
 @Injectable()
 export class PlanService extends BaseService<Plan, PlanDTO> {
@@ -14,13 +16,16 @@ export class PlanService extends BaseService<Plan, PlanDTO> {
     super(_repository);
   }
 
+  isAgeInRangeExact(birthdate: string | Date, minAge: number, maxAge: number) {
+    const age = getAge(birthdate);
+    return age >= minAge && age <= maxAge;
+  }
+
   async validatePlan(body: ValidatePlanDTO) {
     const plan = await this._repository.findById(body.planId);
     if (!plan) throw new BadRequestException('Plan not found');
 
-    const age =
-      new Date().getFullYear() - new Date(body.dateOfBirth).getFullYear();
-    if (age < plan.minAge || age > plan.maxAge) {
+    if (!this.isAgeInRangeExact(body.dateOfBirth, plan.minAge, plan.maxAge)) {
       throw new BadRequestException(
         `Customer age must be between ${plan.minAge} and ${plan.maxAge}`,
       );

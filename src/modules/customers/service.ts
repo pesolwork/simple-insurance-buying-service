@@ -21,6 +21,20 @@ export class CustomerService extends BaseService<Customer, CustomerDTO> {
     super(_repository);
   }
 
+  async getProfile(userId: number): Promise<ResponseDTO<CustomerDTO>> {
+    const data = await this._repository.findOne({
+      where: {
+        userId,
+      },
+    });
+
+    if (!data) {
+      throw new BadRequestException('Data not found');
+    }
+
+    return new ResponseDTO({ data: new CustomerDTO(data) });
+  }
+
   async register(body: CreateCustomerDTO): Promise<ResponseDTO<CustomerDTO>> {
     const { data: user } = await this.usersService.findByEmail(body.email);
 

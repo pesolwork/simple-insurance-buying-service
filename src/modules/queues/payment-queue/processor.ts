@@ -12,6 +12,7 @@ import { TransactionRepository } from 'src/modules/transactions/repository';
 import { RunningNumberRepository } from 'src/modules/running-numbers/repository';
 import { Sequelize } from 'sequelize-typescript';
 import { EmailProducer } from '../email-queue/producer';
+import * as dayjs from 'dayjs';
 
 @Processor('payment_queue')
 export class PaymentProcessor extends WorkerHost {
@@ -176,16 +177,14 @@ export class PaymentProcessor extends WorkerHost {
       return {}; // ไม่แก้ policy หาก payment fail
     }
 
-    const startDate = paidAt;
-    const endDate = startDate
-      ? new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000)
-      : null;
+    const start = paidAt ? dayjs(paidAt) : null;
+    const end = start ? start.add(365, 'day') : null;
 
     return {
       no,
       status: PolicyStatus.Active,
-      startDate,
-      endDate,
+      startDate: start ? start.toDate() : null,
+      endDate: end ? end.toDate() : null,
     };
   }
 

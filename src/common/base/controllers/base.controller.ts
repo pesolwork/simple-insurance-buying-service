@@ -6,14 +6,12 @@ import {
   Post,
   Put,
   Query,
-  Req,
   UseGuards,
   UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { Request } from 'express';
 import { Model } from 'sequelize-typescript';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/common/enum';
@@ -45,11 +43,7 @@ export abstract class BaseController<T extends Model, R> {
 
   @Post()
   @UsePipes(new ValidationPipe({ transform: true }))
-  async create(
-    @Body() body: any,
-    @Req() req: Request,
-  ): Promise<ResponseDTO<R>> {
-    body.createdByUserId = req?.['user']?.id;
+  async create(@Body() body: any): Promise<ResponseDTO<R>> {
     return this.service.create(body);
   }
 
@@ -58,18 +52,13 @@ export abstract class BaseController<T extends Model, R> {
   async update(
     @Param('id') id: number,
     @Body() body: any,
-    @Req() req: Request,
   ): Promise<ResponseDTO<R>> {
-    body.updatedByUserId = req?.['user']?.id;
     return this.service.update(id, body);
   }
 
   @Delete(':id')
   @UsePipes(new ValidationPipe({ transform: true }))
-  async delete(
-    @Param('id') id: number,
-    @Req() req: Request,
-  ): Promise<ResponseDTO<number>> {
-    return this.service.delete(id, req);
+  async delete(@Param('id') id: number): Promise<ResponseDTO<number>> {
+    return this.service.delete(id);
   }
 }
