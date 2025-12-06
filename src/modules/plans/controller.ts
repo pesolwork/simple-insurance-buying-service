@@ -30,7 +30,7 @@ import { ValidatePlanDTO } from './dto/validate-plan.dto';
   version: '1',
   path: 'plans',
 })
-@Roles(UserRole.SuperAdmin)
+@Roles(UserRole.SuperAdmin, UserRole.Admin)
 @UseGuards(AuthGuard, RoleGuard)
 export class PlanController extends BaseController<Plan, PlanDTO> {
   constructor(private readonly _service: PlanService) {
