@@ -16,6 +16,14 @@ CREATE TYPE "transaction_status" AS ENUM (
   'failed'
 );
 
+CREATE TYPE "claim_status" AS ENUM (
+  'pending_review',
+  'requesting_docs',
+  'approved',
+  'rejected',
+  'paid'
+);
+
 CREATE TABLE "running_numbers" (
   "id" serial PRIMARY KEY,
   "type" varchar NOT NULL,
@@ -120,6 +128,20 @@ CREATE TABLE "transactions" (
   "updated_at" timestamptz DEFAULT (now())
 );
 
+CREATE TABLE "claims" (
+  "id" serial PRIMARY KEY,
+  "policy_id" int,
+  "customer_id" int,
+  "created_by_id" int,
+  "claim_number" varchar UNIQUE,
+  "incident_date" date NOT NULL,
+  "incident_description" text,
+  "claim_amount" numeric(10,2),
+  "status" claim_status DEFAULT 'pending_review',
+  "created_at" timestamptz DEFAULT (now()),
+  "updated_at" timestamptz DEFAULT (now())
+);
+
 CREATE UNIQUE INDEX ON "running_numbers" ("type", "prefix");
 
 COMMENT ON COLUMN "running_numbers"."type" IS 'ประเภทเลข เช่น policy';
@@ -137,3 +159,9 @@ ALTER TABLE "health_infos" ADD FOREIGN KEY ("policy_id") REFERENCES "policies" (
 ALTER TABLE "beneficiaries" ADD FOREIGN KEY ("policy_id") REFERENCES "policies" ("id");
 
 ALTER TABLE "transactions" ADD FOREIGN KEY ("policy_id") REFERENCES "policies" ("id");
+
+ALTER TABLE "claims" ADD FOREIGN KEY ("policy_id") REFERENCES "policies" ("id");
+
+ALTER TABLE "claims" ADD FOREIGN KEY ("customer_id") REFERENCES "customers" ("id");
+
+ALTER TABLE "claims" ADD FOREIGN KEY ("created_by_id") REFERENCES "users" ("id");

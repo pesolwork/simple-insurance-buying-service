@@ -33,7 +33,7 @@ import { Request } from 'express';
   version: '1',
   path: 'customers',
 })
-@Roles(UserRole.SuperAdmin)
+@Roles(UserRole.SuperAdmin, UserRole.Admin)
 @UseGuards(AuthGuard, RoleGuard)
 export class CustomerController extends BaseController<Customer, CustomerDTO> {
   constructor(private readonly _service: CustomerService) {

@@ -26,7 +26,7 @@ import { BaseController } from 'src/common/base/controllers/base.controller';
   version: '1',
   path: 'health-infos',
 })
-@Roles(UserRole.SuperAdmin)
+@Roles(UserRole.SuperAdmin, UserRole.Admin)
 @UseGuards(AuthGuard, RoleGuard)
 export class HealthInfoController extends BaseController<
   HealthInfo,
