@@ -9,7 +9,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PaymentService } from 'artifacts/payment/service';
-import { Sequelize, CreateOptions, Transaction, FindOptions } from 'sequelize';
+import { CreateOptions, Transaction, FindOptions } from 'sequelize';
 import { ResponseDTO } from 'src/common/base/dto/base-response.dto';
 import {
   PolicyStatus,
@@ -45,6 +45,7 @@ import { PolicyRepository } from './repository';
 import { PolicyService } from './service';
 import { PolicyView, PolicyIncludeView } from './view';
 import * as bcrypt from 'bcrypt';
+import { Sequelize } from 'sequelize-typescript';
 
 @Injectable()
 export class PolicyBLL extends PolicyService {
