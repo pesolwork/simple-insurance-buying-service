@@ -3,7 +3,7 @@ import { Job } from 'bullmq';
 import { MailerService } from 'artifacts/mailer/service';
 import { PolicyRepository } from '../../policies/repository';
 import { EmailQueueJobName } from './constants';
-import { PolicyAssociationDTO } from '../../policy-associations/dto/dto';
+import { PolicyAssociationDTO } from '../../policies/dto/association.dto';
 import { PolicyIncludeView, PolicyView } from '../../policies/view';
 import { Logger } from '@nestjs/common';
 import { PdfService } from '../../shared/pdf.service';

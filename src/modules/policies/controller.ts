@@ -25,12 +25,12 @@ import { PolicyPaymentQrResponseDTO } from './dto/payment-qr-response.dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import { ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { PolicyBLL } from './bll';
-import { PolicyAssociationDTO } from '../policy-associations/dto/dto';
+import { PolicyAssociationDTO } from './dto/association.dto';
 import { Request, Response } from 'express';
 import { CreatePolicyApplicationDTO } from './dto/create-policy-application.dto';
 import { PolicyView } from './view';
-import { PolicyAssociationSearchDTO } from '../policy-associations/dto/search.dto';
-import { CreatePolicyAssociationDTO } from '../policy-associations/dto/create.dto';
+import { PolicyAssociationSearchDTO } from './dto/search-association.dto';
+import { CreatePolicyAssociationDTO } from './dto/create-association.dto';
 
 @Controller({
   version: '1',

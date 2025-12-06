@@ -42,7 +42,7 @@ export class Claim extends Model<Claim> {
     type: DataType.INTEGER,
     allowNull: true,
   })
-  declare ustomerId: number;
+  declare customerId: number;
 
   @BelongsTo(() => Customer)
   declare customer: Customer;

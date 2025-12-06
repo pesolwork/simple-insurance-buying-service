@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { BaseDTO } from 'src/common/base/dto/base.dto';
 import { ClaimStatus } from 'src/common/enum';
 
-export class ClaimDTO {
+export class ClaimDTO extends BaseDTO {
   @ApiProperty({ example: 1 })
   id: number;
 
