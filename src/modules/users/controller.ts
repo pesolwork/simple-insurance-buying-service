@@ -22,7 +22,7 @@ import { BaseController } from 'src/common/base/controllers/base.controller';
   version: '1',
   path: 'users',
 })
-@Roles(UserRole.SuperAdmin)
+@Roles(UserRole.SuperAdmin, UserRole.Admin)
 @UseGuards(AuthGuard, RoleGuard)
 export class UserController extends BaseController<User, UserDTO> {
   constructor(private readonly _service: UserService) {

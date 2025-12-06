@@ -23,7 +23,7 @@ export class TransactionService extends BaseService<
     options = options || {};
     options.where = options.where || {};
 
-    const fields = ['policyId'];
+    const fields = ['policyId', 'status'];
 
     for (const value of fields) {
       if (query[value]) {

@@ -1,7 +1,7 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Injectable } from '@nestjs/common';
-import { PaymentQueueJobName } from './constants';
+import { PaymentQueueJobName } from './enum';
 
 @Injectable()
 export class PaymentProducer {
