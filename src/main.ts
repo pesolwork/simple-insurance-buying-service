@@ -24,7 +24,9 @@ async function bootstrap() {
       .setTitle('Simple Insurance Buying Service')
       .setDescription('This is a simple insurance buying service')
       .build();
+
     const documentFactory = () => SwaggerModule.createDocument(app, config);
+
     SwaggerModule.setup('/docs', app, documentFactory, {
       useGlobalPrefix: true,
       jsonDocumentUrl: 'docs/json',

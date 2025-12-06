@@ -47,7 +47,6 @@ export class AuthController {
   @Post('otp/request')
   @HttpCode(200)
   @UsePipes(new ValidationPipe({ transform: true }))
-  @ApiResponseData(200, undefined)
   async requestOtp(@Body() body: RequestOtpDTO) {
     return this.authService.requestOtp(body);
   }
