@@ -71,7 +71,7 @@ export class AuthController {
   @Public()
   @Post('refresh-token')
   @HttpCode(200)
-  @ApiResponseData(200, UserDTO)
+  @ApiResponseData(200, LoginResponseDTO)
   refreshToken(@Body() body: RefreshTokenDTO) {
     return this.authService.refreshToken(body.refreshToken);
   }

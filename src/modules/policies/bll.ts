@@ -1,54 +1,55 @@
+import { UserRepository } from '../users/repository';
+import { User } from 'src/models/user.model';
+import { PdfService } from '../shared/pdf.service';
+import { ConfigService } from '@nestjs/config';
+import { IAppConfig } from 'src/config/type';
 import {
-  BadRequestException,
   Injectable,
+  BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateOptions, FindOptions, Transaction } from 'sequelize';
-import { PolicyIncludeView, PolicyView } from './view';
-import { Sequelize } from 'sequelize-typescript';
-import { PolicyService } from './service';
-import { PolicyRepository } from './repository';
-import { CustomerRepository } from '../customers/repository';
-import { BeneficiaryRepository } from '../beneficiaries/repository';
-import { HealthInfoRepository } from '../health-infos/repository';
-import { Policy } from 'src/models/policy.model';
-import { ResponseDTO } from 'src/common/base/dto/base-response.dto';
-import { PlanRepository } from '../plans/repository';
 import { PaymentService } from 'artifacts/payment/service';
+import { Sequelize, CreateOptions, Transaction, FindOptions } from 'sequelize';
+import { ResponseDTO } from 'src/common/base/dto/base-response.dto';
 import {
-  PaymentMethod,
   PolicyStatus,
+  PaymentMethod,
   TransactionStatus,
   UserRole,
 } from 'src/common/enum';
-import { TransactionRepository } from '../transactions/repository';
-import { HealthInfo } from 'src/models/health-info.model';
+import { toThaiBath } from 'src/common/utils/numbers';
 import { Beneficiary } from 'src/models/beneficiary.model';
-import * as PDFDocument from 'pdfkit';
-import { policyStatusMap } from './constants';
-import * as path from 'node:path';
+import { Customer } from 'src/models/customer.model';
+import { HealthInfo } from 'src/models/health-info.model';
+import { Policy } from 'src/models/policy.model';
+import { BeneficiaryDTO } from '../beneficiaries/dto/dto';
+import { BeneficiaryRepository } from '../beneficiaries/repository';
+import { CustomerDTO } from '../customers/dto/dto';
+import { CustomerRepository } from '../customers/repository';
+import { CustomerService } from '../customers/service';
+import { HealthInfoDTO } from '../health-infos/dto/dto';
+import { HealthInfoRepository } from '../health-infos/repository';
+import { PlanRepository } from '../plans/repository';
+import { PlanService } from '../plans/service';
+import { CreatePolicyAssociationDTO } from '../policy-associations/dto/create.dto';
 import { PolicyAssociationDTO } from '../policy-associations/dto/dto';
 import { PolicyAssociationSearchDTO } from '../policy-associations/dto/search.dto';
-import { toThaiBath } from 'src/common/utils/numbers';
-import { formatThaiDate } from 'src/common/utils/dates';
-import { PolicyPaymentQrResponseDTO } from './dto/payment-qr-response.dto';
-import { CreatePolicyApplicationDTO } from './dto/create-policy-application.dto';
-import { CreateHealthInfoDTO } from './dto/create-health-info.dto';
-import { CreateBeneficiaryDTO } from './dto/create-beneficiary.dto';
 import { EmailProducer } from '../queues/email-queue/producer';
-import { CustomerService } from '../customers/service';
-import { CreatePolicyAssociationDTO } from '../policy-associations/dto/create.dto';
-import { PlanService } from '../plans/service';
-import { Customer } from 'src/models/customer.model';
-import { BeneficiaryDTO } from '../beneficiaries/dto/dto';
-import { HealthInfoDTO } from '../health-infos/dto/dto';
-import { CustomerDTO } from '../customers/dto/dto';
+import { TransactionRepository } from '../transactions/repository';
+import { policyStatusMap } from './constants';
+import { CreateBeneficiaryDTO } from './dto/create-beneficiary.dto';
+import { CreateHealthInfoDTO } from './dto/create-health-info.dto';
+import { CreatePolicyApplicationDTO } from './dto/create-policy-application.dto';
+import { PolicyPaymentQrResponseDTO } from './dto/payment-qr-response.dto';
+import { PolicyRepository } from './repository';
+import { PolicyService } from './service';
+import { PolicyView, PolicyIncludeView } from './view';
 import * as bcrypt from 'bcrypt';
-import { UserRepository } from '../users/repository';
-import { User } from 'src/models/user.model';
 
 @Injectable()
 export class PolicyBLL extends PolicyService {
+  private readonly appConfig: IAppConfig;
+
   constructor(
     private readonly _repo: PolicyRepository,
     private readonly _planRepository: PlanRepository,
@@ -62,8 +63,11 @@ export class PolicyBLL extends PolicyService {
     private readonly _customerService: CustomerService,
     private readonly _planService: PlanService,
     private readonly _userRepository: UserRepository,
+    private readonly _pdfService: PdfService,
+    private readonly configService: ConfigService,
   ) {
     super(_repo);
+    this.appConfig = this.configService.get<IAppConfig>('app');
   }
 
   private async loadFullPolicy(policyId: number) {
@@ -78,63 +82,7 @@ export class PolicyBLL extends PolicyService {
 
   async getPolicyPdfStream(policyId: number) {
     const policy = await this.getValidatedPaidPolicy(policyId);
-    return this.generatePolicyPdfStream(policy);
-  }
-
-  private generatePolicyPdfStream(policy: PolicyAssociationDTO) {
-    const doc = new PDFDocument();
-
-    // Register Thai Font
-    doc.registerFont('NotoSansThai', path.resolve('fonts', 'NotoSansThai.ttf'));
-    doc.font('NotoSansThai');
-
-    // Generate PDF Content
-    const { customer, beneficiaries, healthInfo } = policy;
-
-    // Header
-    doc.fontSize(20).text('เอกสารกรมธรรม์ประกัน', { underline: true });
-    doc.moveDown();
-
-    // Policy summary
-    doc.fontSize(14).text(`เลขที่กรมธรรม์: ${policy.no}`);
-    doc.text(`ชื่อแผนประกัน: ${policy.name}`);
-    doc.text(`รายละเอียดความคุ้มครอง: ${policy.coverageDetails}`);
-    doc.text(`สถานะ: ${policyStatusMap[policy.status]}`);
-    doc.text(`ทุนประกัน: ${toThaiBath(+policy.sumInsured)}`);
-    doc.text(`ค่าเบี้ยประกัน: ${toThaiBath(+policy.premiumAmount)} / ปี`);
-    doc.text(`วันที่เริ่มคุ้มครอง: ${formatThaiDate(policy.startDate)}`);
-    doc.text(`วันที่สิ้นสุดคุ้มครอง: ${formatThaiDate(policy.endDate)}`);
-    doc.moveDown();
-
-    // Customer section
-    doc.fontSize(16).text('ข้อมูลผู้เอาประกัน', { underline: true });
-    doc.fontSize(14);
-    doc.text(`ชื่อ–นามสกุล: ${customer.firstName} ${customer.lastName}`);
-    doc.text(`อีเมล: ${customer.email}`);
-    doc.text(`เบอร์โทรศัพท์: ${customer.phone ?? '-'}`);
-    doc.moveDown();
-
-    // Health info
-    doc.fontSize(16).text('ข้อมูลสุขภาพผู้เอาประกัน', { underline: true });
-    doc.fontSize(14);
-    doc.text(`สูบบุหรี่: ${healthInfo.smoking ? 'ใช่' : 'ไม่'}`);
-    doc.text(`ดื่มแอลกอฮอล์: ${healthInfo.drinking ? 'ใช่' : 'ไม่'}`);
-    doc.text(`รายละเอียดเพิ่มเติม: ${healthInfo.detail || '-'}`);
-    doc.moveDown();
-
-    // Beneficiaries
-    doc.fontSize(16).text('ข้อมูลผู้รับผลประโยชน์', { underline: true });
-    beneficiaries.forEach((b, index) => {
-      doc
-        .fontSize(14)
-        .text(
-          `${index + 1}) ${b.firstName} ${b.lastName} (${b.relationship}) - สัดส่วนรับผลประโยชน์ ${b.percentage}%`,
-        );
-    });
-
-    doc.end(); // important!
-
-    return doc; // PDFDocument itself is a stream
+    return this._pdfService.generatePolicyPdfStream(policy);
   }
 
   async generatePaymentPromptpayQr(id: number) {
@@ -532,7 +480,7 @@ export class PolicyBLL extends PolicyService {
 
       <!-- Payment button -->
       <div style="margin-top: 24px; text-align: center;">
-        <a href="https://insurance-buying-system/policies/${data.id}/payment"
+        <a href="${this.appConfig.frontendUrl}/policies/${data.id}/payment"
           class="btn-payment"
           style="
             display: inline-block;
