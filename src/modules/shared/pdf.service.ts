@@ -11,12 +11,19 @@ import { Readable } from 'stream';
 
 @Injectable()
 export class PdfService {
-  private templatePath = path.resolve('templates', 'pdf', 'policy.hbs');
+  private policyTemplate: handlebars.TemplateDelegate;
 
   constructor() {
     handlebars.registerHelper('inc', function (value) {
       return parseInt(value) + 1;
     });
+    this.policyTemplate = this.compilePolicyTemplate();
+  }
+
+  private compilePolicyTemplate(): handlebars.TemplateDelegate {
+    const templatePath = path.resolve('templates', 'pdf', 'policy.hbs');
+    const templateSource = fs.readFileSync(templatePath, 'utf8');
+    return handlebars.compile(templateSource);
   }
 
   async generatePolicyPdfStream(
@@ -54,10 +61,6 @@ export class PdfService {
   }
 
   private async generateHtml(policy: PolicyAssociationDTO): Promise<string> {
-    const templateSource = fs.readFileSync(this.templatePath, 'utf8');
-
-    const template = handlebars.compile(templateSource);
-
     const preparedData = {
       ...policy,
       statusText: policyStatusMap[policy.status],
@@ -73,6 +76,6 @@ export class PdfService {
       },
     };
 
-    return template(preparedData);
+    return this.policyTemplate(preparedData);
   }
 }
