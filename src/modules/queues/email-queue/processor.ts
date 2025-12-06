@@ -2,7 +2,7 @@ import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { MailerService } from 'artifacts/mailer/service';
 import { PolicyRepository } from '../../policies/repository';
-import { EmailQueueJobName } from './constants';
+import { EmailQueueJobName } from './enum';
 import { PolicyAssociationDTO } from '../../policies/dto/association.dto';
 import { PolicyIncludeView, PolicyView } from '../../policies/view';
 import { Logger } from '@nestjs/common';

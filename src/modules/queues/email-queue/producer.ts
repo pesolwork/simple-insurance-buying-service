@@ -1,7 +1,7 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Injectable } from '@nestjs/common';
-import { EmailQueueJobName } from './constants';
+import { EmailQueueJobName } from './enum';
 
 @Injectable()
 export class EmailProducer {

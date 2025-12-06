@@ -17,12 +17,6 @@ export const ClaimIncludeView = {
         {
           model: Plan,
         },
-        {
-          model: HealthInfo,
-        },
-        {
-          model: Beneficiary,
-        },
       ],
     },
     {
