@@ -33,6 +33,8 @@ import { EmailQueueModule } from './modules/queues/email-queue/module';
 import { PaymentQueueModule } from './modules/queues/payment-queue/module';
 import { Otp } from './modules/otp/model';
 import { OtpModule } from './modules/otp/module';
+import { ClaimModule } from './modules/claims/module';
+import { Claim } from './models/claim.model';
 
 @Module({
   imports: [
@@ -85,6 +87,7 @@ import { OtpModule } from './modules/otp/module';
             Transaction,
             RunningNumber,
             Otp,
+            Claim,
           ],
         };
       },
@@ -104,6 +107,7 @@ import { OtpModule } from './modules/otp/module';
     EmailQueueModule,
     PaymentQueueModule,
     OtpModule,
+    ClaimModule,
   ],
   controllers: [AppController],
   providers: [
