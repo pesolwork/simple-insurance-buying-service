@@ -255,11 +255,9 @@ export class PolicyBLL extends PolicyService {
     options?: CreateOptions<any>,
   ): Promise<ResponseDTO<PolicyAssociationDTO>> {
     if (user.role === UserRole.Customer) {
-      const customer = await this._customerRepository.findOne({
-        where: {
-          userId: user.userId,
-        },
-      });
+      const customer = await this._customerRepository.findById(
+        user?.customer?.id,
+      );
 
       if (!customer) throw new BadRequestException('Customer not found');
 

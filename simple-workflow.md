@@ -111,7 +111,7 @@ POST /api/v1/plans/validate
    * Polling เช็คสถานะทุก 5–10 วินาที ```data.status ต้องมีค่าเป็น 'active'```:
 
      ```
-     GET /api/v1/policies/{id}
+     GET /api/v1/policies/{id}/status
      ```
    * ปุ่ม **"ตรวจสอบสถานะการชำระเงิน"** สำหรับ manual check
 

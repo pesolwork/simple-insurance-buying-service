@@ -83,11 +83,12 @@ export class PolicyController {
     return this._service.findById(id);
   }
 
-  @Post('/:id/email')
-  @ApiOperation({ summary: 'ส่งอีเมลกรมธรรม์' })
+  @Public()
+  @Get('/:id/status')
+  @ApiOperation({ summary: 'ดูสถานะกรมธรรม์' })
   @UsePipes(new ValidationPipe({ transform: true }))
-  sendPolicyEmail(@Param('id') id: number) {
-    return this._bll.sendPolicyEmail(id);
+  getStatusById(@Param('id') id: number) {
+    return this._service.getStatusById(id);
   }
 
   @Get('/:id/pdf')
