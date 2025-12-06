@@ -37,6 +37,7 @@ import { CreateBeneficiaryDTO } from './dto/create-beneficiary.dto';
 import { EmailProducer } from '../queues/email-queue/producer';
 import { CustomerService } from '../customers/service';
 import { CreatePolicyAssociationDTO } from '../policy-associations/dto/create.dto';
+import { PlanService } from '../plans/service';
 
 @Injectable()
 export class PolicyBLL extends PolicyService {
@@ -51,6 +52,7 @@ export class PolicyBLL extends PolicyService {
     private readonly _sequelize: Sequelize,
     private readonly _emailProducer: EmailProducer,
     private readonly _customerService: CustomerService,
+    private readonly _planService: PlanService,
   ) {
     super(_repo);
   }
@@ -355,8 +357,7 @@ export class PolicyBLL extends PolicyService {
     const plan = await this._planRepository.findById(planId);
     if (!plan) throw new BadRequestException('Plan not found');
 
-    const age = new Date().getFullYear() - new Date(dob).getFullYear();
-    if (age < plan.minAge || age > plan.maxAge) {
+    if (!this._planService.isAgeInRangeExact(dob, plan.minAge, plan.maxAge)) {
       throw new BadRequestException(
         `Customer age must be between ${plan.minAge} and ${plan.maxAge}`,
       );
@@ -365,7 +366,7 @@ export class PolicyBLL extends PolicyService {
     return plan;
   }
 
-  private validateBeneficiaries(beneficiaries: any[]) {
+  private validateBeneficiaries(beneficiaries: CreateBeneficiaryDTO[]) {
     const total = beneficiaries.reduce((a, b) => a + b.percentage, 0);
     if (total !== 100) {
       throw new BadRequestException(

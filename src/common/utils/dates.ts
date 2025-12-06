@@ -1,24 +1,34 @@
+import * as dayjs from 'dayjs';
+
+import * as buddhistEra from 'dayjs/plugin/buddhistEra';
+import 'dayjs/locale/th';
+
+dayjs.extend(buddhistEra);
+dayjs.locale('th');
+
 export const formatThaiDate = (
-  date: Date | string | null | undefined,
-): string => {
-  if (!date) return 'ไม่ระบุ';
+  dateStr?: string | Date,
+  outputFormat = 'D MMMM BBBB',
+) => {
+  const d = dayjs(dateStr); // ISO format เช่น 2025-12-31
 
-  const d = new Date(date);
-  const thaiYear = d.getFullYear() + 543;
-  const thaiMonths = [
-    'มกราคม',
-    'กุมภาพันธ์',
-    'มีนาคม',
-    'เมษายน',
-    'พฤษภาคม',
-    'มิถุนายน',
-    'กรกฎาคม',
-    'สิงหาคม',
-    'กันยายน',
-    'ตุลาคม',
-    'พฤศจิกายน',
-    'ธันวาคม',
-  ];
+  if (!d.isValid()) {
+    return null;
+  }
 
-  return `${d.getDate()} ${thaiMonths[d.getMonth()]} ${thaiYear}`;
+  return d.format(outputFormat);
+};
+
+export const getAge = (birthdate: string | Date) => {
+  const today = dayjs();
+  const dob = dayjs(birthdate);
+
+  let age = today.diff(dob, 'year');
+
+  // ถ้าวันเกิดปีนี้ยังไม่ถึง → ลบอายุลง 1 ปี
+  if (today.isBefore(dob.add(age, 'year'))) {
+    age--;
+  }
+
+  return age;
 };
