@@ -68,12 +68,8 @@ export abstract class BaseService<T extends Model, R> {
   }
 
   async delete(id: any): Promise<ResponseDTO<number>> {
-    const data = await this.repository.findById(id);
-    if (!data) {
-      throw new BadRequestException('Data not found');
-    }
     const result = await this.repository.delete({ where: { id } });
-    const responseDTO = new ResponseDTO<number>({ data: result[0] });
+    const responseDTO = new ResponseDTO<number>({ data: result });
     return responseDTO;
   }
 }

@@ -4,6 +4,7 @@ import {
   Model,
   DataType,
   BelongsTo,
+  ForeignKey,
 } from 'sequelize-typescript';
 import { User } from './user.model';
 
@@ -19,6 +20,17 @@ export class Customer extends Model<Customer> {
     autoIncrement: true,
   })
   declare id: number;
+
+  @ForeignKey(() => User)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+    
+  })
+  declare userId: number;
+
+  @BelongsTo(() => User)
+  declare user: User;
 
   @Column({
     type: DataType.STRING,
@@ -62,13 +74,4 @@ export class Customer extends Model<Customer> {
     allowNull: false,
   })
   declare address: string;
-
-  @Column({
-    type: DataType.INTEGER,
-    allowNull: true,
-  })
-  declare userId: number;
-
-  @BelongsTo(() => User)
-  declare user?: User;
 }

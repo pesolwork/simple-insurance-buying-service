@@ -11,9 +11,9 @@ import { IJwtConfig } from 'src/config/type';
 import { Request } from 'express';
 import { ResponseDTO } from 'src/common/base/dto/base-response.dto';
 import { UserRepository } from '../users/repository';
-import { CustomerRepository } from '../customers/repository';
 import { OtpService } from '../otp/service';
 import { EmailProducer } from '../queues/email-queue/producer';
+import { Customer } from 'src/models/customer.model';
 
 @Injectable()
 export class AuthService {
@@ -21,7 +21,6 @@ export class AuthService {
 
   constructor(
     private readonly userRepository: UserRepository,
-    private readonly customerRepository: CustomerRepository,
     private readonly otpService: OtpService,
     private readonly emailProducer: EmailProducer,
     private readonly configService: ConfigService,
@@ -36,6 +35,7 @@ export class AuthService {
       userId: user.id,
       email: user.email,
       role: user.role,
+      customer: user?.customer,
     };
     const accessToken = jwt.sign(payload, secret, {
       expiresIn: '1h',
@@ -59,6 +59,7 @@ export class AuthService {
         attributes: {
           exclude: ['password'],
         },
+        include: [Customer],
       });
       if (!user) {
         throw new UnauthorizedException('Invalid refresh token');
@@ -84,6 +85,7 @@ export class AuthService {
       attributes: {
         exclude: ['password'],
       },
+      include: [Customer],
     });
     if (!result) {
       throw new BadRequestException('User not found');
@@ -99,6 +101,7 @@ export class AuthService {
   async login(body: LoginDTO) {
     const user = await this.userRepository.findOne({
       where: { email: body.email },
+      include: [Customer],
     });
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -158,6 +161,7 @@ export class AuthService {
 
     const user = await this.userRepository.findOne({
       where: { email: body.email },
+      include: [Customer],
     });
     if (!user) {
       throw new BadRequestException('User not found');

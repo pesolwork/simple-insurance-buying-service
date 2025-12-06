@@ -5,6 +5,7 @@ import {
   Table,
   PrimaryKey,
   Default,
+  AutoIncrement,
 } from 'sequelize-typescript';
 
 @Table({
@@ -14,12 +15,12 @@ import {
 })
 export class Otp extends Model<Otp> {
   @PrimaryKey
-  @Default(DataType.UUIDV4)
+  @AutoIncrement
   @Column({
-    type: DataType.UUID,
+    type: DataType.INTEGER,
     allowNull: false,
   })
-  declare id: string;
+  declare id: number;
 
   @Column({
     type: DataType.STRING,

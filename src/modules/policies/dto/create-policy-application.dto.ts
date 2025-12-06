@@ -1,10 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNumber, IsObject } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsNumber,
+  IsObject,
+  IsOptional,
+} from 'class-validator';
 import { CreateHealthInfoDTO } from './create-health-info.dto';
 import { CreateBeneficiaryDTO } from './create-beneficiary.dto';
 import { CreateCustomerDTO } from 'src/modules/customers/dto/create.dto';
 
 export class CreatePolicyApplicationDTO {
+  @ApiProperty({ type: Boolean, required: false })
+  @IsBoolean()
+  @IsOptional()
+  isRegister: boolean;
+
   @ApiProperty({ type: Number, required: true })
   @IsNumber()
   planId: number;
