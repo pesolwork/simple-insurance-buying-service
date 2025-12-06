@@ -45,8 +45,8 @@ Endpoints ทั้งหมดจะอยู่ภายใต้ prefix /api/
    * POST /:id/email (Admin/SuperAdmin): ส่งอีเมลกรมธรรม์ให้ลูกค้า
    * PUT /:id (Admin/SuperAdmin): อัปเดตข้อมูลกรมธรรม์
    * GET / (Admin/SuperAdmin): ค้นหากรมธรรม์ทั้งหมด
-   * GET /associations/:view (Admin/SuperAdmin): ค้นหากรมธรรม์พร้อมข้อมูล关联 (เช่น ข้อมูลลูกค้า, ผู้รับผลประโยชน์)
-   * GET /associations/:view/:id (Public): ดึงข้อมูลกรมธรรม์ตาม ID พร้อมข้อมูล关联
+   * GET /associations/:view (Admin/SuperAdmin): ค้นหากรมธรรม์พร้อมข้อมูลอื่นๆ (เช่น ข้อมูลลูกค้า, ผู้รับผลประโยชน์)
+   * GET /associations/:view/:id (Public): ดึงข้อมูลกรมธรรม์ตาม ID พร้อมข้อมูลอื่นๆ
 
   ---
 
@@ -56,6 +56,8 @@ Endpoints ทั้งหมดจะอยู่ภายใต้ prefix /api/
    * GET / (Customer/Admin): ดูรายการเคลม (ลูกค้าจะเห็นเฉพาะของตัวเอง)
    * GET /:id (Customer/Admin): ดูรายละเอียดการเคลมตาม ID
    * PUT /:id (Admin/SuperAdmin): อัปเดตสถานะหรือข้อมูลการเคลม
+   * GET /associations/:view (Admin/Customer): ค้นหาการเคลมพร้อมข้อมูลอื่นๆ (เช่น ข้อมูลลูกค้า, ข้อมูลกรมธรรม์)
+   * GET /associations/:view/:id (Admin/Customer): ดึงข้อมูลการเคลมตาม ID พร้อมข้อมูลอื่นๆ
 
   ---
 
