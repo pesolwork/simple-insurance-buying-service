@@ -253,7 +253,7 @@ export class PolicyBLL extends PolicyService {
     if (user.role === UserRole.Customer) {
       const customer = await this._customerRepository.findOne({
         where: {
-          userId: user.id,
+          userId: user.userId,
         },
       });
 
