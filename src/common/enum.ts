@@ -24,4 +24,13 @@ export enum PaymentMethod {
 
 export enum RunningNumberType {
   Policy = 'policy',
+  Claim = 'claim',
+}
+
+export enum ClaimStatus {
+  PendingReview = 'pending_review',
+  RequestingDocs = 'requesting_docs',
+  Approved = 'approved',
+  Rejected = 'rejected',
+  Paid = 'paid',
 }

@@ -56,6 +56,7 @@ export class PolicyController {
     return this._bll.findAllByView(view, query);
   }
 
+  @Public()
   @Get('/associations/:view/:id')
   @UsePipes(new ValidationPipe({ transform: true }))
   @ApiParam({ name: 'view', enum: PolicyView })

@@ -1,3 +1,8 @@
+export interface IAppConfig {
+  port: number;
+  frontendUrl: string;
+}
+
 export interface IDatabaseConfig {
   host: string;
   port: number;
@@ -35,7 +40,7 @@ export interface IQueueConfig {
 }
 
 export interface IConfig {
-  port: number;
+  app: IAppConfig;
   database: IDatabaseConfig;
   jwt: IJwtConfig;
   sms: ISmsConfig;
