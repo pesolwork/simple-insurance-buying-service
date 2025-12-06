@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateOptions, FindOptions } from 'sequelize';
+import { CreateOptions, FindOptions, Transaction } from 'sequelize';
 import { PolicyIncludeView, PolicyView } from './view';
 import { Sequelize } from 'sequelize-typescript';
 import { PolicyService } from './service';
@@ -43,6 +43,9 @@ import { Customer } from 'src/models/customer.model';
 import { BeneficiaryDTO } from '../beneficiaries/dto/dto';
 import { HealthInfoDTO } from '../health-infos/dto/dto';
 import { CustomerDTO } from '../customers/dto/dto';
+import * as bcrypt from 'bcrypt';
+import { UserRepository } from '../users/repository';
+import { User } from 'src/models/user.model';
 
 @Injectable()
 export class PolicyBLL extends PolicyService {
@@ -58,6 +61,7 @@ export class PolicyBLL extends PolicyService {
     private readonly _emailProducer: EmailProducer,
     private readonly _customerService: CustomerService,
     private readonly _planService: PlanService,
+    private readonly _userRepository: UserRepository,
   ) {
     super(_repo);
   }
@@ -318,8 +322,20 @@ export class PolicyBLL extends PolicyService {
     try {
       options = { ...(options || {}), transaction: trx };
 
+      let userModel: User;
+      if (rawData.isRegister) {
+        userModel = await this.createUser(
+          {
+            email: customer.email,
+            password: customer?.password,
+          },
+          trx,
+        );
+      }
+
       // --- create customer หากเป็น application ใหม่ ---
       if (customer) {
+        customer.userId = userModel?.id || null;
         customerModel = await this._customerRepository.create(
           customer,
           options,
@@ -352,6 +368,21 @@ export class PolicyBLL extends PolicyService {
       await trx.rollback();
       throw err;
     }
+  }
+
+  private async createUser(
+    body: { email: string; password: string },
+    transaction: Transaction,
+  ) {
+    const hashedPassword = await bcrypt.hash(body.password, 10);
+    return this._userRepository.create(
+      {
+        email: body.email,
+        password: hashedPassword,
+        role: UserRole.Customer,
+      },
+      { transaction },
+    );
   }
 
   private async sendApplicationEmail(

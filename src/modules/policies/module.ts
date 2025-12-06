@@ -13,6 +13,7 @@ import { RunningNumberModule } from '../running-numbers/module';
 import { TransactionModule } from '../transactions/module';
 import { PolicyBLL } from './bll';
 import { EmailQueueModule } from '../queues/email-queue/module';
+import { UserModule } from '../users/module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { EmailQueueModule } from '../queues/email-queue/module';
     TransactionModule,
     RunningNumberModule,
     forwardRef(() => EmailQueueModule),
+    UserModule,
   ],
   controllers: [PolicyController],
   providers: [PolicyRepository, PolicyService, PolicyBLL],
