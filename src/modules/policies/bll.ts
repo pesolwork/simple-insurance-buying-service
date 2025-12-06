@@ -38,6 +38,10 @@ import { EmailProducer } from '../queues/email-queue/producer';
 import { CustomerService } from '../customers/service';
 import { CreatePolicyAssociationDTO } from '../policy-associations/dto/create.dto';
 import { PlanService } from '../plans/service';
+import { Customer } from 'src/models/customer.model';
+import { BeneficiaryDTO } from '../beneficiaries/dto/dto';
+import { HealthInfoDTO } from '../health-infos/dto/dto';
+import { CustomerDTO } from '../customers/dto/dto';
 
 @Injectable()
 export class PolicyBLL extends PolicyService {
@@ -224,96 +228,108 @@ export class PolicyBLL extends PolicyService {
     data: CreatePolicyApplicationDTO,
     options?: CreateOptions<any>,
   ): Promise<ResponseDTO<PolicyAssociationDTO>> {
-    const { customer, healthInfo, beneficiaries } = data;
-
-    await this._customerService.validateEmail(customer.email);
-
-    const plan = await this.getAndValidatePlan(
-      data.planId,
-      customer.dateOfBirth as any,
+    const result = await this.createPolicyFlow(
+      {
+        customer: data.customer,
+        planId: data.planId,
+        healthInfo: data.healthInfo,
+        beneficiaries: data.beneficiaries,
+        rawData: data,
+      },
+      options,
     );
 
-    this.validateBeneficiaries(beneficiaries);
+    await this.sendApplicationCreatedEmail(result.customer.email, {
+      ...result,
+      plan: await this.getAndValidatePlan(
+        data.planId,
+        data.customer.dateOfBirth,
+      ),
+    });
 
-    const policyPayload = await this.preparePolicyPayload(data, plan);
-    const transaction = await this._sequelize.transaction();
-
-    try {
-      options = { ...(options || {}), transaction };
-
-      const createdCustomer = await this._customerRepository.create(
-        customer,
-        options,
-      );
-      policyPayload.customerId = createdCustomer.id;
-
-      const policy = await this._repo.create(policyPayload as any, options);
-
-      const [createdHealthInfo, createdBeneficiaries] =
-        await this.createAssociations(
-          policy.id,
-          healthInfo,
-          beneficiaries,
-          options,
-        );
-
-      await transaction.commit();
-
-      const policyDTO = policy.toJSON();
-      const customerDTO = createdCustomer.toJSON();
-      const healthInfoDTO = createdHealthInfo.toJSON();
-      const beneficiariesDTO = createdBeneficiaries.map((item) =>
-        item.toJSON(),
-      );
-
-      this.sendApplicationCreatedEmail(createdCustomer.email, {
-        ...policyDTO,
-        customer: customerDTO,
-        plan,
-        beneficiaries: beneficiariesDTO,
-        healthInfo: healthInfoDTO,
-      });
-
-      return new ResponseDTO<PolicyAssociationDTO>({
-        data: {
-          ...policyDTO,
-          customer: customerDTO,
-          healthInfo: healthInfoDTO,
-          beneficiaries: beneficiariesDTO,
-        } as PolicyAssociationDTO,
-      });
-    } catch (err) {
-      await transaction.rollback();
-      throw err;
-    }
+    return new ResponseDTO({ data: result });
   }
 
   async createPolicyAssociation(
     data: CreatePolicyAssociationDTO,
     options?: CreateOptions<any>,
   ): Promise<ResponseDTO<PolicyAssociationDTO>> {
-    const { customerId, healthInfo, beneficiaries } = data;
-
-    const customer = await this._customerRepository.findById(customerId);
-    if (!customer) throw new NotFoundException('Customer not found');
-
-    const plan = await this.getAndValidatePlan(
-      data.planId,
-      customer.dateOfBirth as any,
+    const result = await this.createPolicyFlow(
+      {
+        customerId: data.customerId,
+        planId: data.planId,
+        healthInfo: data.healthInfo,
+        beneficiaries: data.beneficiaries,
+        rawData: data,
+      },
+      options,
     );
 
+    await this.sendApplicationCreatedEmail(result.customer.email, {
+      ...result,
+      plan: await this.getAndValidatePlan(
+        data.planId,
+        result.customer.dateOfBirth,
+      ),
+    });
+
+    return new ResponseDTO({ data: result });
+  }
+
+  private async createPolicyFlow(
+    payload: {
+      customer?: any; // ถ้ามี = สร้างใหม่
+      customerId?: number; // ถ้ามี = ใช้ customer เดิม
+      planId: number;
+      healthInfo: any;
+      beneficiaries: any[];
+      rawData: any; // original DTO ใช้ในการ preparePayload
+    },
+    options?: CreateOptions<any>,
+  ): Promise<PolicyAssociationDTO> {
+    const { customer, customerId, planId, healthInfo, beneficiaries, rawData } =
+      payload;
+
+    // --- validate customer ---
+    let customerModel: Customer;
+    if (customer) {
+      await this._customerService.validateEmail(customer.email);
+    }
+
+    // get customer (new or existing)
+    if (customerId) {
+      customerModel = await this._customerRepository.findById(customerId);
+      if (!customerModel) throw new NotFoundException('Customer not found');
+    }
+
+    // --- get plan ---
+    const dob = customer?.dateOfBirth || customerModel.dateOfBirth;
+    const plan = await this.getAndValidatePlan(planId, dob);
+
+    // --- validate beneficiaries ---
     this.validateBeneficiaries(beneficiaries);
 
-    const policyPayload = await this.preparePolicyPayload(data, plan);
-    const transaction = await this._sequelize.transaction();
+    // --- prepare policy ---
+    const policyPayload = await this.preparePolicyPayload(rawData, plan);
 
+    const trx = await this._sequelize.transaction();
     try {
-      options = { ...(options || {}), transaction };
+      options = { ...(options || {}), transaction: trx };
 
-      policyPayload.customerId = customer.id;
+      // --- create customer หากเป็น application ใหม่ ---
+      if (customer) {
+        customerModel = await this._customerRepository.create(
+          customer,
+          options,
+        );
+      }
 
+      policyPayload.customerId = customerModel.id;
+
+      // --- create policy ---
       const policy = await this._repo.create(policyPayload as any, options);
 
+      // --- create associations ---
       const [createdHealthInfo, createdBeneficiaries] =
         await this.createAssociations(
           policy.id,
@@ -322,38 +338,21 @@ export class PolicyBLL extends PolicyService {
           options,
         );
 
-      await transaction.commit();
+      await trx.commit();
 
-      const policyDTO = policy.toJSON();
-      const customerDTO = customer.toJSON();
-      const healthInfoDTO = createdHealthInfo.toJSON();
-      const beneficiariesDTO = createdBeneficiaries.map((item) =>
-        item.toJSON(),
-      );
-
-      this.sendApplicationCreatedEmail(customer.email, {
-        ...policyDTO,
-        customer: customerDTO,
-        plan,
-        beneficiaries: beneficiariesDTO,
-        healthInfo: healthInfoDTO,
-      });
-
-      return new ResponseDTO<PolicyAssociationDTO>({
-        data: {
-          ...policyDTO,
-          customer: customerDTO,
-          healthInfo: healthInfoDTO,
-          beneficiaries: beneficiariesDTO,
-        } as PolicyAssociationDTO,
-      });
+      return {
+        ...new PolicyAssociationDTO(policy),
+        customer: new CustomerDTO(customerModel),
+        healthInfo: new HealthInfoDTO(createdHealthInfo),
+        beneficiaries: createdBeneficiaries.map((x) => new BeneficiaryDTO(x)),
+      };
     } catch (err) {
-      await transaction.rollback();
+      await trx.rollback();
       throw err;
     }
   }
 
-  async getAndValidatePlan(planId: number, dob: string) {
+  async getAndValidatePlan(planId: number, dob: string | Date) {
     const plan = await this._planRepository.findById(planId);
     if (!plan) throw new BadRequestException('Plan not found');
 
