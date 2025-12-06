@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+
+  <style>
+    body {
+      font-size: 14px;
+      padding: 24px;
+      line-height: 1.7;
+      color: #333;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin-bottom: 8px;
+      text-decoration: underline;
+    }
+    h2 {
+      font-size: 18px;
+      text-decoration: underline;
+      margin-top: 24px;
+      margin-bottom: 6px;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+
+    .beneficiary {
+      margin-bottom: 4px;
+    }
+
+    .row {
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>เอกสารกรมธรรม์ประกัน</h1>
+
+  <h2>ข้อมูลกรมธรรม์</h2>
+  <div class="row">เลขที่กรมธรรม์: {{no}}</div>
+  <div class="row">ชื่อแผนประกัน: {{name}}</div>
+  <div class="row">รายละเอียดความคุ้มครอง: {{coverageDetails}}</div>
+  <div class="row">สถานะ: {{statusText}}</div>
+  <div class="row">ทุนประกัน: {{sumInsuredText}}</div>
+  <div class="row">ค่าเบี้ยประกัน: {{premiumAmountText}}</div>
+  <div class="row">วันที่เริ่มคุ้มครอง: {{startDateText}}</div>
+  <div class="row">วันที่สิ้นสุดคุ้มครอง: {{endDateText}}</div>
+
+
+  <h2>ข้อมูลผู้เอาประกัน</h2>
+  <div class="row">ชื่อ–นามสกุล: {{customer.firstName}} {{customer.lastName}}</div>
+  <div class="row">อีเมล: {{customer.email}}</div>
+  <div class="row">เบอร์โทรศัพท์: {{customer.phone}}</div>
+
+
+  <h2>ข้อมูลสุขภาพ</h2>
+  <div class="row">สูบบุหรี่: {{healthInfo.smoking}}</div>
+  <div class="row">ดื่มแอลกอฮอล์: {{healthInfo.drinking}}</div>
+  <div class="row">รายละเอียดเพิ่มเติม: {{healthInfo.detail}}</div>
+
+
+  <h2>ข้อมูลผู้รับผลประโยชน์</h2>
+  <ul>
+    {{#each beneficiaries}}
+      <li class="beneficiary">
+        {{inc @index}}) {{firstName}} {{lastName}} ({{relationship}}) - {{percentage}}%
+      </li>
+    {{/each}}
+  </ul>
+
+</body>
+</html>
