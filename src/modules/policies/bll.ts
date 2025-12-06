@@ -31,8 +31,8 @@ import { HealthInfoDTO } from '../health-infos/dto/dto';
 import { HealthInfoRepository } from '../health-infos/repository';
 import { PlanRepository } from '../plans/repository';
 import { PlanService } from '../plans/service';
-import { CreatePolicyAssociationDTO } from './dto/create-association.dto';
 import { PolicyAssociationDTO } from './dto/association.dto';
+import { CreatePolicyAssociationDTO } from './dto/create-association.dto';
 import { PolicyAssociationSearchDTO } from './dto/search-association.dto';
 import { EmailProducer } from '../queues/email-queue/producer';
 import { TransactionRepository } from '../transactions/repository';
@@ -46,6 +46,9 @@ import { PolicyService } from './service';
 import { PolicyView, PolicyIncludeView } from './view';
 import * as bcrypt from 'bcrypt';
 import { Sequelize } from 'sequelize-typescript';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as handlebars from 'handlebars';
 
 @Injectable()
 export class PolicyBLL extends PolicyService {
@@ -408,108 +411,31 @@ export class PolicyBLL extends PolicyService {
   }
 
   private async sendApplicationCreatedEmail(to: string, data: any) {
-    const { customer, beneficiaries, status } = data;
+    const templatePath = path.resolve(
+      'templates',
+      'email',
+      'policy-application.hbs',
+    );
+    const templateFile = fs.readFileSync(templatePath, 'utf8');
+
+    // Register helpers
+    handlebars.registerHelper('toThaiBath', (amount) => toThaiBath(amount));
+    handlebars.registerHelper(
+      'policyStatusText',
+      (status) => policyStatusMap[status],
+    );
+
+    const template = handlebars.compile(templateFile);
+
+    const html = template({
+      ...data,
+      paymentUrl: `${this.appConfig.frontendUrl}/policies/${data.id}/payment`,
+    });
 
     await this._emailProducer.sendEmail({
       to,
       subject: 'แจ้งการสร้างใบคำขอประกันสำเร็จ',
-      html: `
-    <style>
-      /* Responsive for mobile */
-      @media (max-width: 600px) {
-        .btn-payment {
-          width: 100% !important;
-          padding: 14px 0 !important;
-          font-size: 18px !important;
-        }
-      }
-
-      /* Hover effect */
-      .btn-payment:hover {
-        background-color: #125ac4 !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.25) !important;
-      }
-    </style>
-
-    <div style="font-family: 'Noto Sans Thai', Arial, sans-serif; line-height:1.6; color:#333;">
-      <p>สวัสดีคุณ ${customer.firstName},</p>
-      <p>ใบคำขอประกันของคุณถูกสร้างเรียบร้อยแล้ว</p>
-
-      <table style="
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 15px;
-        margin-top: 10px;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      ">
-        <tr>
-          <td style="border:1px solid #ddd; padding:10px; width:40%; background:#fafafa;"><b>ชื่อแผนประกัน</b></td>
-          <td style="border:1px solid #ddd; padding:10px;">${data.name}</td>
-        </tr>
-        <tr>
-          <td style="border:1px solid #ddd; padding:10px; background:#fafafa;"><b>รายละเอียดความคุ้มครอง</b></td>
-          <td style="border:1px solid #ddd; padding:10px;">${data.coverageDetails || 'ไม่ระบุ'}</td>
-        </tr>
-        <tr>
-          <td style="border:1px solid #ddd; padding:10px; background:#fafafa;"><b>ทุนประกัน</b></td>
-          <td style="border:1px solid #ddd; padding:10px;">${toThaiBath(+data.sumInsured)}</td>
-        </tr>
-        <tr>
-          <td style="border:1px solid #ddd; padding:10px; background:#fafafa;"><b>ค่าเบี้ยประกัน (ต่อปี)</b></td>
-          <td style="border:1px solid #ddd; padding:10px;">${toThaiBath(+data.premiumAmount)} / ปี</td>
-        </tr>
-        <tr>
-          <td style="border:1px solid #ddd; padding:10px; background:#fafafa;"><b>สถานะ</b></td>
-          <td style="border:1px solid #ddd; padding:10px;">${policyStatusMap[status]}</td>
-        </tr>
-        <tr>
-          <td style="border:1px solid #ddd; padding:10px; background:#fafafa;"><b>ผู้รับผลประโยชน์</b></td>
-          <td style="border:1px solid #ddd; padding:10px;">
-            ${beneficiaries
-              .map(
-                (b) => `
-              <div style="margin-bottom:6px;">• ${b.firstName} ${b.lastName} — ${b.relationship}, ${b.percentage}%</div>
-            `,
-              )
-              .join('')}
-          </td>
-        </tr>
-      </table>
-
-      <!-- Payment button -->
-      <div style="margin-top: 24px; text-align: center;">
-        <a href="${this.appConfig.frontendUrl}/policies/${data.id}/payment"
-          class="btn-payment"
-          style="
-            display: inline-block;
-            background-color: #1a73e8;
-            color: #fff;
-            width: 260px;
-            max-width: 100%;
-            padding: 12px 32px;
-            border-radius: 10px;
-            font-size: 17px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.18);
-          "
-        >
-          💳 ชำระเบี้ยประกัน
-        </a>
-      </div>
-
-      <p style="text-align:center; margin-top:22px; font-size:14px; color:#666;">
-        หากคุณยังไม่ดำเนินการชำระ ระบบจะยังไม่เริ่มคุ้มครองตามแผนประกัน
-      </p>
-
-      <p style="margin-top:30px;">ขอบคุณที่ใช้บริการ</p>
-      <div style="margin-top:5px;"><b>บริษัทประกันภัย</b></div>
-    </div>
-    `,
+      html,
     });
   }
 

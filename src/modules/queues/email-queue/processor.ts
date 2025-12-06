@@ -7,6 +7,9 @@ import { PolicyAssociationDTO } from '../../policies/dto/association.dto';
 import { PolicyIncludeView, PolicyView } from '../../policies/view';
 import { Logger } from '@nestjs/common';
 import { PdfService } from '../../shared/pdf.service';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as handlebars from 'handlebars';
 
 @Processor('email_queue')
 export class EmailProcessor extends WorkerHost {
@@ -58,17 +61,7 @@ export class EmailProcessor extends WorkerHost {
     await this._mailerService.sendMail({
       to: policyDTO?.customer?.email,
       subject: 'ใบเสร็จชำระเบี้ยและกรมธรรม์ (ชำระแล้ว)',
-      html: `
-      <p>เรียนคุณ ${policyDTO?.customer?.firstName},</p>
-      <p>บริษัทได้รับการยืนยันการชำระเบี้ยประกันของท่านเรียบร้อยแล้ว และกรมธรรม์ของท่านได้เริ่มมีผลคุ้มครอง</p>
-      <p>กรุณาตรวจสอบเอกสารกรมธรรม์ที่แนบมากับอีเมลฉบับนี้</p>
-      <p>หากมีข้อสงสัยเพิ่มเติม ท่านสามารถติดต่อฝ่ายบริการลูกค้าได้ตลอดเวลาค่ะ/ครับ</p>
-
-      <br/>
-      <p>ขอขอบคุณที่ไว้วางใจใช้บริการของเรา</p>
-      <p><strong>ด้วยความเคารพ</strong></p>
-      <p>บริษัทประกันชีวิตของท่าน</p>
-    `,
+      html: this.generateHTML(policyDTO),
       attachments: [
         {
           filename: `policy-${policyDTO.no}.pdf`,
@@ -79,6 +72,17 @@ export class EmailProcessor extends WorkerHost {
     });
 
     return true;
+  }
+
+  private generateHTML(data: PolicyAssociationDTO) {
+    const templatePath = path.resolve('templates', 'email', 'policy-paid.hbs');
+    const templateFile = fs.readFileSync(templatePath, 'utf8');
+
+    const template = handlebars.compile(templateFile);
+
+    return template({
+      ...data,
+    });
   }
 
   @OnWorkerEvent('completed')
