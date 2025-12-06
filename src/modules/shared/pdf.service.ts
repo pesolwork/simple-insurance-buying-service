@@ -4,7 +4,7 @@ import * as PDFDocument from 'pdfkit';
 import { formatThaiDate } from 'src/common/utils/dates';
 import { toThaiBath } from 'src/common/utils/numbers';
 import { policyStatusMap } from 'src/modules/policies/constants';
-import { PolicyAssociationDTO } from 'src/modules/policy-associations/dto/dto';
+import { PolicyAssociationDTO } from 'src/modules/policies/dto/association.dto';
 
 @Injectable()
 export class PdfService {

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { BaseSearchDTO } from 'src/common/base/dto/base-search.dto';
 
 export class HealthInfoSearchDTO extends BaseSearchDTO {
@@ -7,5 +8,6 @@ export class HealthInfoSearchDTO extends BaseSearchDTO {
     description: 'Policy ID',
     required: false,
   })
+  @Transform(({ value }) => +value)
   policyId: number;
 }

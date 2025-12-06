@@ -43,7 +43,7 @@ export class PolicyService extends BaseService<Policy, PolicyDTO> {
       };
     }
 
-    const fields = ['planId', 'customerId'];
+    const fields = ['planId', 'customerId', 'status'];
     for (const value of fields) {
       if (query[value]) {
         options.where[value] = query[value];

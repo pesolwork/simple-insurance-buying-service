@@ -1,7 +1,7 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { PolicyRepository } from '../../policies/repository';
-import { PaymentQueueJobName } from './constants';
+import { PaymentQueueJobName } from './enum';
 import { BadRequestException, Logger } from '@nestjs/common';
 import {
   PolicyStatus,
