@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -26,6 +27,7 @@ import { ApiOperation } from '@nestjs/swagger';
 import { ValidateEmailDTO } from './dto/validate-email.dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import { CreateCustomerDTO } from './dto/create.dto';
+import { Request } from 'express';
 
 @Controller({
   version: '1',
@@ -36,6 +38,14 @@ import { CreateCustomerDTO } from './dto/create.dto';
 export class CustomerController extends BaseController<Customer, CustomerDTO> {
   constructor(private readonly _service: CustomerService) {
     super(_service);
+  }
+
+  @Roles(UserRole.Customer)
+  @Get('profile')
+  @ApiResponseData(200, CustomerDTO)
+  getProfile(@Req() req: Request): Promise<ResponseDTO<CustomerDTO>> {
+    const body = req['user'];
+    return this._service.getProfile(body.userId);
   }
 
   @Public()

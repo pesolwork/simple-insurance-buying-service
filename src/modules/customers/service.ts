@@ -14,6 +14,19 @@ import { UserRole } from 'src/common/enum';
 
 @Injectable()
 export class CustomerService extends BaseService<Customer, CustomerDTO> {
+  async getProfile(userId: number): Promise<ResponseDTO<CustomerDTO>> {
+    const data = await this._repository.findOne({
+      where: {
+        userId,
+      },
+    });
+
+    if (!data) {
+      throw new BadRequestException('Data not found');
+    }
+
+    return new ResponseDTO({ data: new CustomerDTO(data) });
+  }
   constructor(
     private readonly _repository: CustomerRepository,
     private readonly usersService: UserService,
