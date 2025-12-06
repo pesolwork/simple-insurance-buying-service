@@ -45,7 +45,7 @@
 POST /api/v1/customers/validate-email
 ```
 ```
-POST /api/v1/plans/validate
+POST /api/v1/plans/validate-age
 ```
 
 ### 2.2 คำถามสุขภาพ

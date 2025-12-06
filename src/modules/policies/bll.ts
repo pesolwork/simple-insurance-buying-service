@@ -53,6 +53,7 @@ import * as handlebars from 'handlebars';
 @Injectable()
 export class PolicyBLL extends PolicyService {
   private readonly appConfig: IAppConfig;
+  private readonly applicationTemplate: handlebars.TemplateDelegate;
 
   constructor(
     private readonly _repo: PolicyRepository,
@@ -72,6 +73,25 @@ export class PolicyBLL extends PolicyService {
   ) {
     super(_repo);
     this.appConfig = this.configService.get<IAppConfig>('app');
+    this.applicationTemplate = this.compileApplicationTemplate();
+  }
+
+  private compileApplicationTemplate(): handlebars.TemplateDelegate {
+    const templatePath = path.resolve(
+      'templates',
+      'email',
+      'policy-application.hbs',
+    );
+    const templateFile = fs.readFileSync(templatePath, 'utf8');
+
+    // Register helpers
+    handlebars.registerHelper('toThaiBath', (amount) => toThaiBath(amount));
+    handlebars.registerHelper(
+      'policyStatusText',
+      (status) => policyStatusMap[status],
+    );
+
+    return handlebars.compile(templateFile);
   }
 
   private async loadFullPolicy(policyId: number) {
@@ -411,30 +431,14 @@ export class PolicyBLL extends PolicyService {
   }
 
   private async sendApplicationCreatedEmail(to: string, data: any) {
-    const templatePath = path.resolve(
-      'templates',
-      'email',
-      'policy-application.hbs',
-    );
-    const templateFile = fs.readFileSync(templatePath, 'utf8');
-
-    // Register helpers
-    handlebars.registerHelper('toThaiBath', (amount) => toThaiBath(amount));
-    handlebars.registerHelper(
-      'policyStatusText',
-      (status) => policyStatusMap[status],
-    );
-
-    const template = handlebars.compile(templateFile);
-
-    const html = template({
+    const html = this.applicationTemplate({
       ...data,
       paymentUrl: `${this.appConfig.frontendUrl}/policies/${data.id}/payment`,
     });
 
     await this._emailProducer.sendEmail({
       to,
-      subject: 'แจ้งการสร้างใบคำขอประกันสำเร็จ',
+      subject: 'แจ้งการสร้างใบคำขอสำเร็จ',
       html,
     });
   }

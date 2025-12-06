@@ -21,7 +21,7 @@ export class PlanService extends BaseService<Plan, PlanDTO> {
     return age >= minAge && age <= maxAge;
   }
 
-  async validatePlan(body: ValidatePlanDTO) {
+  async validateAge(body: ValidatePlanDTO) {
     const plan = await this._repository.findById(body.planId);
     if (!plan) throw new BadRequestException('Plan not found');
 

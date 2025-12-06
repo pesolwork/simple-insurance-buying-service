@@ -14,6 +14,7 @@ import * as handlebars from 'handlebars';
 @Processor('email_queue')
 export class EmailProcessor extends WorkerHost {
   private readonly _logger = new Logger(EmailProcessor.name);
+  private readonly policyPaidTemplate: handlebars.TemplateDelegate;
 
   constructor(
     private readonly _mailerService: MailerService,
@@ -21,6 +22,13 @@ export class EmailProcessor extends WorkerHost {
     private readonly _pdfService: PdfService,
   ) {
     super();
+    this.policyPaidTemplate = this.compilePolicyPaidTemplate();
+  }
+
+  private compilePolicyPaidTemplate(): handlebars.TemplateDelegate {
+    const templatePath = path.resolve('templates', 'email', 'policy-paid.hbs');
+    const templateFile = fs.readFileSync(templatePath, 'utf8');
+    return handlebars.compile(templateFile);
   }
 
   async process(job: Job<any>): Promise<any> {
@@ -75,12 +83,7 @@ export class EmailProcessor extends WorkerHost {
   }
 
   private generateHTML(data: PolicyAssociationDTO) {
-    const templatePath = path.resolve('templates', 'email', 'policy-paid.hbs');
-    const templateFile = fs.readFileSync(templatePath, 'utf8');
-
-    const template = handlebars.compile(templateFile);
-
-    return template({
+    return this.policyPaidTemplate({
       ...data,
     });
   }
