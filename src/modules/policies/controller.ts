@@ -91,6 +91,13 @@ export class PolicyController {
     return this._service.getStatusById(id);
   }
 
+  @Post('/:id/email')
+  @ApiOperation({ summary: 'ส่งอีเมลกรมธรรม์' })
+  @UsePipes(new ValidationPipe({ transform: true }))
+  sendPolicyEmail(@Param('id') id: number) {
+    return this._bll.sendPolicyEmail(id);
+  }
+
   @Get('/:id/pdf')
   @ApiOperation({ summary: 'ดาวน์โหลดไฟล์กรมธรรม์ PDF (stream)' })
   async downloadPdf(@Param('id') id: number, @Res() res: Response) {
