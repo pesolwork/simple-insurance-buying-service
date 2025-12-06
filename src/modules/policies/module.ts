@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { PolicyRepository } from './repository';
 import { PolicyService } from './service';
@@ -24,7 +24,7 @@ import { EmailQueueModule } from '../queues/email-queue/module';
     PaymentModule,
     TransactionModule,
     RunningNumberModule,
-    EmailQueueModule,
+    forwardRef(() => EmailQueueModule),
   ],
   controllers: [PolicyController],
   providers: [PolicyRepository, PolicyService, PolicyBLL],
