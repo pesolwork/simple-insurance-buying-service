@@ -14,6 +14,13 @@ import { UserRole } from 'src/common/enum';
 
 @Injectable()
 export class CustomerService extends BaseService<Customer, CustomerDTO> {
+  constructor(
+    private readonly _repository: CustomerRepository,
+    private readonly usersService: UserService,
+  ) {
+    super(_repository);
+  }
+
   async getProfile(userId: number): Promise<ResponseDTO<CustomerDTO>> {
     const data = await this._repository.findOne({
       where: {
@@ -26,12 +33,6 @@ export class CustomerService extends BaseService<Customer, CustomerDTO> {
     }
 
     return new ResponseDTO({ data: new CustomerDTO(data) });
-  }
-  constructor(
-    private readonly _repository: CustomerRepository,
-    private readonly usersService: UserService,
-  ) {
-    super(_repository);
   }
 
   async register(body: CreateCustomerDTO): Promise<ResponseDTO<CustomerDTO>> {
